@@ -17,7 +17,15 @@ module.exports = function(grunt) {
         stripBanners: false
       },
       scripts: {
-        src: ['src/extendscript.tilemill.jsx'],
+        src: [
+        'src/tilemill/globals.jsx',
+        'src/lib/extendscript.geo/dist/extendscript.geo.id.jsx',
+        'src/lib/extendscript.csv/dist/extendscript.csv.jsx',
+        'src/tilemill/importer.jsx',
+        'src/tilemill/marker.jsx',
+        'src/tilemill/MercatorMap.jsx',
+        'src/tilemill/geo.jsx',
+        'src/tilemill/main.jsx'],
         dest: 'src/tmp/<%= pkg.name %>.concat.<%= pkg.version %>.jsx'
       }
     },
@@ -36,12 +44,12 @@ module.exports = function(grunt) {
         src: ['src/tmp/<%= pkg.name %>.concat.<%= pkg.version %>.jsx'],
         dest: 'src/tmp/<%= pkg.name %>.concat.wrap.<%= pkg.version %>.jsx',
         options: {
-          wrapper: ['//before\n', '\n//after']
+                    wrapper: ['(function(thisObj) {', '})(this);\n']
         },
       },
     },
     watch: {
-      files: ['src/*.jsx', 'src/*.js', 'src/lib/*'],
+      files: ['src/tilemill/*', 'src/lib/*'],
       tasks: ['concat:scripts', 'wrap:script','copy:script']
     }
 

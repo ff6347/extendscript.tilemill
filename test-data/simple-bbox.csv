@@ -1,0 +1,3 @@
+lat,lon,name
+45,-120,upper_left
+-45,120,lower_right
