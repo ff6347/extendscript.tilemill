@@ -1,0 +1,83 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<script src='http://code.jquery.com/jquery-2.1.0.min.js'></script>
+	</head>
+	<body>
+		<canvas id="holder" width="800" height="1018" style="width:800px; height=1018px;"></canvas>
+		<SCRIPT TYPE="text/javascript">
+			var max = ToWebMercator(7.9102, 62.4311);
+			var min = ToWebMercator(-14.0625, 46.4379);
+
+  			var o_min_x = min[0];
+  			var o_max_x = max[0];
+
+  			var o_min_y = min[1];
+  			var o_max_y = max[1];
+
+  			var width = 800;
+  			var height = 1018;
+
+  			var x_ratio = width/(o_max_x - o_min_x);
+  			var y_ratio = height/(o_max_y - o_min_y);
+
+  			$(document).ready(function() {
+				var canvas = document.getElementById('holder');
+      			var ctx = canvas.getContext('2d');
+
+	  			var mapImg = new Image();
+				mapImg.onload = function() {
+					ctx.drawImage(mapImg, 0, 0, width, height);
+
+					//mapping lat = y, lng = x
+					var lat = 50.055977;
+					var lng = -5.655096;
+					var xy = ToWebMercator(lng, lat);
+
+					var centerX = (xy[0] - o_min_x)*x_ratio;
+					var centerY = (xy[1] - o_min_y)*y_ratio;
+
+					ctx.beginPath();
+					ctx.arc(centerX, height - centerY, 5, 0, 2 * Math.PI, false);
+					ctx.fillStyle = 'red';
+					ctx.fill();
+				}
+				mapImg.src = "beispielsprojekt.png";
+			});
+
+			function ToGeographic(mercatorX_lon, mercatorY_lat){
+				if (Math.abs(mercatorX_lon) < 180 && Math.abs(mercatorY_lat) < 90)
+					return;
+
+				if ((Math.abs(mercatorX_lon) > 20037508.3427892) || (Math.abs(mercatorY_lat) > 20037508.3427892))
+					return;
+
+				var x = mercatorX_lon;
+				var y = mercatorY_lat;
+				var num3 = x / 6378137.0;
+				var num4 = num3 * 57.295779513082323;
+				var num5 = Math.floor((double)((num4 + 180.0) / 360.0));
+				var num6 = num4 - (num5 * 360.0);
+				var num7 = 1.5707963267948966 - (2.0 * Math.atan(Math.exp((-1.0 * y) / 6378137.0)));
+				mercatorX_lon = num6;
+				mercatorY_lat = num7 * 57.295779513082323;
+
+				return [mercatorX_lon, mercatorY_lat];
+			}
+
+			function ToWebMercator(mercatorX_lon, mercatorY_lat){
+				if ((Math.abs(mercatorX_lon) > 180 || Math.abs(mercatorY_lat) > 90))
+					return;
+
+				var num = mercatorX_lon * 0.017453292519943295;
+				var x = 6378137.0 * num;
+				var a = mercatorY_lat * 0.017453292519943295;
+
+				mercatorX_lon = x;
+				mercatorY_lat = 3189068.5 * Math.log((1.0 + Math.sin(a)) / (1.0 - Math.sin(a)));
+
+				return [mercatorX_lon, mercatorY_lat];
+			}
+		</SCRIPT>
+	</body>
+</html>
