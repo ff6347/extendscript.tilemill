@@ -1,14 +1,10 @@
 # extendscript.tilemill
 
 importing tilemill images to indesign.
-This is only tested with commandline exports like discribed here:  
-https://www.mapbox.com/tilemill/docs/manual/exporting/#export_examples  
 
-    cd /Applications/TileMill.app/Contents/Resources
+still w.i.p.  
 
-and then:
-
-    ./index.js export geography-class ~/Documents/MapBox/export/geography-class.png --format=png --width=600 --height=400 --bbox="-131.4844,20.3034,-62.5781,51.3992"
+Should be based on this [http://tillnagel.com/2011/06/tilemill-for-processing/](http://tillnagel.com/2011/06/tilemill-for-processing/)
 
 
 ## Getting Started
