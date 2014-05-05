@@ -39,7 +39,8 @@
   };
 
     var getScreenY = function(latitudeInDegrees) {
-    var res = mapScreenHeight * (getScreenYRelative(latitudeInDegrees) - topLatitudeRelative) / (bottomLatitudeRelative - topLatitudeRelative);
+    var screen_y_realtiv =  getScreenYRelative(latitudeInDegrees);
+    var res = mapScreenHeight * (screen_y_realtiv - topLatitudeRelative) / (bottomLatitudeRelative - topLatitudeRelative);
      $.writeln("get screen y result: " + res);
     return res;
 
@@ -97,22 +98,36 @@ var MercatorMap = function(mapScreenWidth, mapScreenHeight, topLatitude, bottomL
    */
 
   // public MercatorMap(float mapScreenWidth, float mapScreenHeight, float topLatitude, float bottomLatitude, float leftLongitude, float rightLongitude) {
+$.writeln("------------------------------");
   mapScreenWidth = mapScreenWidth;
+  $.writeln("mapScreenWidth: " + mapScreenWidth);
   mapScreenHeight = mapScreenHeight;
+  $.writeln("mapScreenHeight: " + mapScreenHeight);
   topLatitude = topLatitude;
+  $.writeln("topLatitude: " + topLatitude);
   bottomLatitude = bottomLatitude;
+  $.writeln("bottomLatitude: " + bottomLatitude);
   leftLongitude = leftLongitude;
+  $.writeln("leftLongitude: " + leftLongitude);
   rightLongitude = rightLongitude;
+  $.writeln("rightLongitude: " + rightLongitude);
   topLatitudeRelative = getScreenYRelative(topLatitude);
+  $.writeln("topLatitudeRelative: " + topLatitudeRelative);
   bottomLatitudeRelative = getScreenYRelative(bottomLatitude);
+  $.writeln("bottomLatitudeRelative: " + bottomLatitudeRelative);
   leftLongitudeRadians = getRadians(leftLongitude);
+  $.writeln("leftLongitudeRadians: " + leftLongitudeRadians);
   rightLongitudeRadians = getRadians(rightLongitude);
+  $.writeln("rightLongitudeRadians: " + rightLongitudeRadians);
   $.writeln("End of MercatorMap init");
+  $.writeln("------------------------------");
   return {};
   };
    var getScreenLocation = function(geoLocation) {
     var latitudeInDegrees = geoLocation.x;
     var longitudeInDegrees = geoLocation.y;
+    $.writeln(latitudeInDegrees);
+    $.writeln(longitudeInDegrees);
     var x = getScreenX(longitudeInDegrees);
     var y = getScreenY(latitudeInDegrees);
     if(DEBUG) $.writeln("In Mercator Map getScreenLocation -- x: " + x + " y: " + y);

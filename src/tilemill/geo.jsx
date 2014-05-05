@@ -2,33 +2,6 @@
  * This is src/locations/geo.jsx
  */
 
-// found here
-// http://stackoverflow.com/questions/2103924/mercator-longitude-and-latitude-calculations-to-x-and-y-on-a-cropped-map-of-the/10401734#10401734
-//
-var geo_to_pixel = function(lat, lon, w, h, ul_lat, ul_lon , lr_lat, lr_lon) {
-  // var w;
-  // var h;
-  // var ul_lon = 9.8;
-  // var lr_lon = 10.2;
-  var lon_delta = lr_lon - ul_lon;
-  $.writeln("lon_delta: " +lon_delta);
-  // var lr_lat = 53.45;
-  l_lat_deg = lr_lat * Math.PI / 180;
-  $.writeln("l_lat_deg: " + l_lat_deg);
-  var x = (lon - ul_lat) * (w / lon_delta);
-$.writeln("x: " + x);
-  lat = lat * Math.PI / 180;
-  $.writeln("lat: " + lat);
-  var worldMapWidth = ((w / lon_delta) * 360) / (2 * Math.PI);
-  $.writeln("worldMapWidth: " + worldMapWidth);
-  var mapOffsetY = (worldMapWidth / 2 * Math.log((1 + Math.sin(l_lat_deg)) / (1 - Math.sin(l_lat_deg))));
-  $.writeln("mapOffsetY: " + mapOffsetY);
-
-  var y = h - ((worldMapWidth / 2 * Math.log((1 + Math.sin(lat)) / (1 - Math.sin(lat)))) - mapOffsetY);
-  $.writeln("y: " + y);
-  return {"x":x,"y": y};
-};
-
 
   var geojson_analyzer = function(settings, element) {
     var found_lat = false;

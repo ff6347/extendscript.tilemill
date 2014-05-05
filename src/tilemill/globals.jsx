@@ -57,8 +57,8 @@ settings.boundingBox = {
 };
 
 settings.bbox = {
-  xmin:0,
-  ymin:0,
-  xmax:0,
-  ymax:0
+  top_lat:80,
+  bottom_lat:-80,
+  left_lon:-180,
+  right_lon:180
 };

@@ -1,5 +1,5 @@
 
-/*! extendscript.tilemill.jsx - v0.1.0 - 2014-05-04 */
+/*! extendscript.tilemill.jsx - v0.1.0 - 2014-05-05 */
 // this is globals.jsx
 
 var DEBUG = true;
@@ -59,10 +59,10 @@ settings.boundingBox = {
 };
 
 settings.bbox = {
-  xmin:0,
-  ymin:0,
-  xmax:0,
-  ymax:0
+  top_lat:80,
+  bottom_lat:-80,
+  left_lon:-180,
+  right_lon:180
 };
 
 
@@ -510,6 +510,8 @@ Geo.Utilities.ind = {
  */
 if(DEBUG === undefined){
   var DEBUG = true;
+}else{
+  DEBUG = true;
 }
 CSV = function() {};
 // END OF CSV.js
@@ -898,7 +900,8 @@ var get_or_create_objectstyles = function(doc) {
   };
 
     var getScreenY = function(latitudeInDegrees) {
-    var res = mapScreenHeight * (getScreenYRelative(latitudeInDegrees) - topLatitudeRelative) / (bottomLatitudeRelative - topLatitudeRelative);
+    var screen_y_realtiv =  getScreenYRelative(latitudeInDegrees);
+    var res = mapScreenHeight * (screen_y_realtiv - topLatitudeRelative) / (bottomLatitudeRelative - topLatitudeRelative);
      $.writeln("get screen y result: " + res);
     return res;
 
@@ -956,22 +959,36 @@ var MercatorMap = function(mapScreenWidth, mapScreenHeight, topLatitude, bottomL
    */
 
   // public MercatorMap(float mapScreenWidth, float mapScreenHeight, float topLatitude, float bottomLatitude, float leftLongitude, float rightLongitude) {
+$.writeln("------------------------------");
   mapScreenWidth = mapScreenWidth;
+  $.writeln("mapScreenWidth: " + mapScreenWidth);
   mapScreenHeight = mapScreenHeight;
+  $.writeln("mapScreenHeight: " + mapScreenHeight);
   topLatitude = topLatitude;
+  $.writeln("topLatitude: " + topLatitude);
   bottomLatitude = bottomLatitude;
+  $.writeln("bottomLatitude: " + bottomLatitude);
   leftLongitude = leftLongitude;
+  $.writeln("leftLongitude: " + leftLongitude);
   rightLongitude = rightLongitude;
+  $.writeln("rightLongitude: " + rightLongitude);
   topLatitudeRelative = getScreenYRelative(topLatitude);
+  $.writeln("topLatitudeRelative: " + topLatitudeRelative);
   bottomLatitudeRelative = getScreenYRelative(bottomLatitude);
+  $.writeln("bottomLatitudeRelative: " + bottomLatitudeRelative);
   leftLongitudeRadians = getRadians(leftLongitude);
+  $.writeln("leftLongitudeRadians: " + leftLongitudeRadians);
   rightLongitudeRadians = getRadians(rightLongitude);
+  $.writeln("rightLongitudeRadians: " + rightLongitudeRadians);
   $.writeln("End of MercatorMap init");
+  $.writeln("------------------------------");
   return {};
   };
    var getScreenLocation = function(geoLocation) {
     var latitudeInDegrees = geoLocation.x;
     var longitudeInDegrees = geoLocation.y;
+    $.writeln(latitudeInDegrees);
+    $.writeln(longitudeInDegrees);
     var x = getScreenX(longitudeInDegrees);
     var y = getScreenY(latitudeInDegrees);
     if(DEBUG) $.writeln("In Mercator Map getScreenLocation -- x: " + x + " y: " + y);
@@ -981,33 +998,6 @@ var MercatorMap = function(mapScreenWidth, mapScreenHeight, topLatitude, bottomL
 /**
  * This is src/locations/geo.jsx
  */
-
-// found here
-// http://stackoverflow.com/questions/2103924/mercator-longitude-and-latitude-calculations-to-x-and-y-on-a-cropped-map-of-the/10401734#10401734
-//
-var geo_to_pixel = function(lat, lon, w, h, ul_lat, ul_lon , lr_lat, lr_lon) {
-  // var w;
-  // var h;
-  // var ul_lon = 9.8;
-  // var lr_lon = 10.2;
-  var lon_delta = lr_lon - ul_lon;
-  $.writeln("lon_delta: " +lon_delta);
-  // var lr_lat = 53.45;
-  l_lat_deg = lr_lat * Math.PI / 180;
-  $.writeln("l_lat_deg: " + l_lat_deg);
-  var x = (lon - ul_lat) * (w / lon_delta);
-$.writeln("x: " + x);
-  lat = lat * Math.PI / 180;
-  $.writeln("lat: " + lat);
-  var worldMapWidth = ((w / lon_delta) * 360) / (2 * Math.PI);
-  $.writeln("worldMapWidth: " + worldMapWidth);
-  var mapOffsetY = (worldMapWidth / 2 * Math.log((1 + Math.sin(l_lat_deg)) / (1 - Math.sin(l_lat_deg))));
-  $.writeln("mapOffsetY: " + mapOffsetY);
-
-  var y = h - ((worldMapWidth / 2 * Math.log((1 + Math.sin(lat)) / (1 - Math.sin(lat)))) - mapOffsetY);
-  $.writeln("y: " + y);
-  return {"x":x,"y": y};
-};
 
 
   var geojson_analyzer = function(settings, element) {
@@ -1132,11 +1122,11 @@ var get_dim = function( /*PageItem*/ obj, /*bool*/ visible) {
   return [b[3] - b[1], b[2] - b[0]];
 };
 
-var do_it = function() {
+var setup_doc = function(){
   var image = File.openDialog("Select your image", "*.png", false);
   if (image === null) {
-    return 'no image selected or aborted';
-  } else {
+    return null;
+  }
     var temp_doc = app.documents.add();
     var temp_rect = temp_doc.pages[0].rectangles.add({
       geometricBounds: [0, 0, 100, 100]
@@ -1160,14 +1150,33 @@ var do_it = function() {
       geometricBounds: [0, 0, dim[1], dim[0]]
     });
     frame.place(image);
+
+return {"doc":doc,"frame":frame,"page":page};
+};
+
+
+
+var draw = function() {
+
+var setup_result = setup_doc();
+
+if(setup_result === null) return; // aborted by user
+
+  var doc = setup_result.doc;
+  var frame = setup_result.frame;
+  var page = setup_result.page;
+
+
     var dialog = app.dialogs.add({
       name: "Paste Mapbox Bounds",
       canCancel: true
     });
     var d_col_one = dialog.dialogColumns.add();
     var t_box = d_col_one.textEditboxes.add({
-      editContents: "-120,45,-120,-45"
+      editContents: "-120,-45,120,45"
     });
+
+
 
     if (dialog.show() === true) {
 
@@ -1175,15 +1184,16 @@ var do_it = function() {
       // alert(bboxstring);
       dialog.destroy();
       var arr = bboxstring.split(",");
-      settings.bbox.xmin = parseFloat(arr[0]);
-      settings.bbox.ymin = parseFloat(arr[3]);
-      settings.bbox.xmax = parseFloat(arr[2]);
-      settings.bbox.ymax = parseFloat(arr[1]);
 
-      settings.boundingBox.bounds.ul_lat = settings.bbox.ymin;
-      settings.boundingBox.bounds.ul_lon = settings.bbox.xmin;
-      settings.boundingBox.bounds.lr_lat = settings.bbox.ymax;
-      settings.boundingBox.bounds.lr_lon = settings.bbox.xmax;
+      settings.bbox.left_lon = parseFloat(arr[0]);
+      settings.bbox.bottom_lat = parseFloat(arr[1]);
+      settings.bbox.right_lon = parseFloat(arr[2]);
+      settings.bbox.top_lat = parseFloat(arr[3]);
+
+      settings.boundingBox.bounds.ul_lat = settings.bbox.top_lat;
+      settings.boundingBox.bounds.ul_lon = settings.bbox.left_lon;
+      settings.boundingBox.bounds.lr_lat = settings.bbox.bottom_lat;
+      settings.boundingBox.bounds.lr_lon = settings.bbox.right_lon;
 
       if (DEBUG) {
         for (var key in settings.bbox) {
@@ -1204,28 +1214,34 @@ var do_it = function() {
     if (keys === null) {
     return 'no possible fields detected';
   }
+
+
+
+
   var mapScreenWidth = settings.pw;
   var mapScreenHeight = settings.ph;
-  var topLatitude = parseFloat(arr[0]);
-  var bottomLatitude = parseFloat(arr[3]);
-  var leftLongitude = parseFloat(arr[2]);
-  var rightLongitude = parseFloat(arr[1]);
-  var lon1 = -132.3633;
-  var lat1 = 14.4347;
-  var lon2 = -58.3594;
-  var lat2 = 57.7979;
+  var topLatitude = settings.bbox.top_lat;
+  var bottomLatitude = settings.bbox.bottom_lat;
+  var leftLongitude = settings.bbox.left_lon;
+  var rightLongitude = settings.bbox.right_lon;
+  // var lon1 = -132.3633;
+  // var lat1 = 14.4347;
+  // var lon2 = -58.3594;
+  // var lat2 = 57.7979;
+  var map = MercatorMap(mapScreenWidth, mapScreenHeight, topLatitude, bottomLatitude, leftLongitude, rightLongitude);
 
-  var tmp = MercatorMap(mapScreenWidth, mapScreenHeight, lat2, lat1, lon1, lon2);
-  var coordinates = [];
+
+  var coordinates = [];
+
   for(var i = 0; i < geodata.length;i++){
     var lat = parseFloat(geodata[i][keys.lat]);
     var lon = parseFloat(geodata[i][keys.lon]);
     var w = settings.pw;
     var h = settings.ph;
-    var ul_lon = settings.boundingBox.bounds.ul_lon;
-    var ul_lat = settings.boundingBox.bounds.ul_lat;
-    var lr_lat = settings.boundingBox.bounds.lr_lat;
-    var lr_lon = settings.boundingBox.bounds.lr_lon;
+    // var ul_lon = settings.boundingBox.bounds.ul_lon;
+    // var ul_lat = settings.boundingBox.bounds.ul_lat;
+    // var lr_lat = settings.boundingBox.bounds.lr_lat;
+    // var lr_lon = settings.boundingBox.bounds.lr_lon;
 if(DEBUG){$.writeln("lat: "+ lat);}
 if(DEBUG){$.writeln("lon: "+ lon);}
 // if(DEBUG){$.writeln("w: "+ w);}
@@ -1234,7 +1250,7 @@ if(DEBUG){$.writeln("lon: "+ lon);}
 // if(DEBUG){$.writeln("ul_lat: "+ ul_lat);}
 // if(DEBUG){$.writeln("lr_lat: "+ lr_lat);}
 // if(DEBUG){$.writeln("lr_lon: "+ lr_lon);}
-    // var xy = geo_to_pixel(lat, lon, w, h, ul_lat, ul_lon, lr_lat, lr_lon);
+//
     var xy = getScreenLocation({x:lat,y: lon});
 
     coordinates.push({"json":geodata[i].toSource(),"xy":xy});
@@ -1243,8 +1259,8 @@ if(DEBUG){$.writeln("lon: "+ lon);}
    // alert(coordinates.toSource());
   place_markers(doc, page, marker, coordinates, settings);
   }
-    }
+
   };
 
 
-do_it();
+draw();
