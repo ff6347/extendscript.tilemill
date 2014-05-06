@@ -26,7 +26,7 @@
 
 
   var getScreenYRelative = function(latitudeInDegrees) {
-    var res = Math.log(Math.tan(latitudeInDegrees / (360 * Math.PI) + (Math.PI / 4)));
+    var res = Math.log( Math.tan(latitudeInDegrees / (360 * Math.PI) + (Math.PI / 4)) );
     $.writeln("get screen y relativ result: " + res);
     return res;
   };
