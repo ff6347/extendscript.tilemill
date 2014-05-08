@@ -38,27 +38,32 @@ var settings = {
   projection_type:1,
   ptype:'mercator',
   doc:null,
-  pw:null,
-  ph:null,
+  pw:0,
+  ph:0,
   // check out http://dbsgeo.com/latlon/
   // to get lat lon coordinates
 };
 
 // this is the world bounding box
 // will also be set by the script from the info of the doc
-settings.boundingBox = {
-  zoomed: true,
-  bounds: {
-    ul_lat:0,
-    ul_lon:0,
-    lr_lat:0,
-    lr_lon:0
-  }
-};
+// settings.boundingBox = {
+//   zoomed: true,
+//   bounds: {
+//     ul_lat:0,
+//     ul_lon:0,
+//     lr_lat:0,
+//     lr_lon:0
+//   }
+// };
 
 settings.bbox = {
-  top_lat:80,
-  bottom_lat:-80,
-  left_lon:-180,
-  right_lon:180
+  // top_lat:80,
+  // bottom_lat:-80,
+  // left_lon:-180,
+  // right_lon:180,
+  min:[],
+  max:[]
 };
+
+
+

@@ -18,12 +18,15 @@ module.exports = function(grunt) {
       },
       scripts: {
         src: [
+        'src/tilemill/license.jsx',
         'src/tilemill/globals.jsx',
-        'src/lib/extendscript.geo/dist/extendscript.geo.id.jsx',
-        'src/lib/extendscript.csv/dist/extendscript.csv.jsx',
+        'src/tilemill/util.jsx',
+        'src/tilemill/document.jsx',
+        // 'src/lib/extendscript.geo/dist/extendscript.geo.id.jsx',
+        // 'src/lib/extendscript.csv/dist/extendscript.csv.jsx',
         'src/tilemill/importer.jsx',
         'src/tilemill/marker.jsx',
-        'src/tilemill/MercatorMap.jsx',
+        // 'src/tilemill/MercatorMap.jsx',
         'src/tilemill/geo.jsx',
         'src/tilemill/main.jsx'],
         dest: 'src/tmp/<%= pkg.name %>.concat.<%= pkg.version %>.jsx'

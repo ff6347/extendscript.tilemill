@@ -103,9 +103,11 @@ var place_markers = function(doc, page, marker, coordinates, settings) {
     layer = doc.activeLayer;
   }
 
+
   for (var i = 0; i < coordinates.length; i++) {
     var currentmarker = marker.duplicate();
     var xy = offset_marker(orientation, currentmarker,coordinates[i].xy.x,coordinates[i].xy.y);
+    xy[1] = settings.ph - xy[1];
     currentmarker.move(xy);
     currentmarker.label = coordinates[i].json;
     currentmarker.itemLayer = layer;
