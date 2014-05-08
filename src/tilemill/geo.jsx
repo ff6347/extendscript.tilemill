@@ -128,12 +128,13 @@ function ToWebMercator(mercatorX_lon, mercatorY_lat) {
   return [mercatorX_lon, mercatorY_lat];
 }
 
-var geo_to_page_coords = function geo_to_page_coords(doc, page, marker, settings) {
-  if (DEBUG) $.writeln("function " + arguments.callee.name + "\n");
+var geo_to_page_coords = function (doc, page, marker, settings) {
   var min_lon = settings.bbox.min[0];
-  var min_lat = settings.bbox.min[1];
 
+  var min_lat = settings.bbox.min[1];
   var max_lon = settings.bbox.max[0];
+
+
   var max_lat = settings.bbox.max[1];
 
   // to web mercator takes lon first then lat
@@ -156,15 +157,8 @@ var geo_to_page_coords = function geo_to_page_coords(doc, page, marker, settings
   var x_ratio = width / (o_max_x - o_min_x);
   var y_ratio = height / (o_max_y - o_min_y);
 
-  // var canvas = document.getElementById('holder');
-  //       var ctx = canvas.getContext('2d');
 
-  // var mapImg = new Image();
-  // mapImg.onload = function() {
-  // ctx.drawImage(mapImg, 0, 0, width, height);
-  //mapping lat = y, lng = x
-  // var lat = 50.055977;
-  var lat = -50.055977;
+  var lat = 50.055977;
 
   var lng = -5.655096;
 
@@ -173,8 +167,7 @@ var geo_to_page_coords = function geo_to_page_coords(doc, page, marker, settings
   var centerX = (xy[0] - o_min_x) * x_ratio;
   var centerY = (xy[1] - o_min_y) * y_ratio;
   var coordinates = [];
-  // centerY = settings.ph - centerY;
-  // var newy = settings.ph - centerY;
+
   var coord = {
     "json": "{'name':'name'}",
     "xy": {
@@ -183,11 +176,6 @@ var geo_to_page_coords = function geo_to_page_coords(doc, page, marker, settings
     }
   };
   coordinates.push(coord);
-  // if(DEBUG) $ .writeln( coord.toSource());
-  if (DEBUG) $.writeln("Page height " + height);
-  if (DEBUG) $.writeln("centerY " + centerY);
-
-  // page.ovals.add({geometricBounds:[(height - centerY),centerX, ((height - centerY) + 10) , (centerX + 10) ]});
   place_markers(doc, page, marker, coordinates, settings);
 
 };
