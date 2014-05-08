@@ -57,6 +57,7 @@ module.exports = function(grunt) {
     }
 
   });
+  grunt.registerTask('build-dist', ['concat:scripts', 'wrap:script','copy:script']);
 
   grunt.registerTask('default', ['watch']);
 

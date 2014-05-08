@@ -163,8 +163,11 @@ var geo_to_page_coords = function geo_to_page_coords(doc, page, marker, settings
   // mapImg.onload = function() {
   // ctx.drawImage(mapImg, 0, 0, width, height);
   //mapping lat = y, lng = x
-  var lat = 50.055977;
+  // var lat = 50.055977;
+  var lat = -50.055977;
+
   var lng = -5.655096;
+
   var xy = ToWebMercator(lng, lat);
   $.writeln("xy " + xy);
   var centerX = (xy[0] - o_min_x) * x_ratio;
