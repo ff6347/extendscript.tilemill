@@ -22,7 +22,7 @@ var set_transformation = function(doc, orientation) {
 var get_marker = function(doc, page) {
   get_or_create_objectstyles(doc);
   var marker = page.ovals.add({
-    geometricBounds: [0, -2, 2, 0],
+    geometricBounds: [0, -10, 10, 0],
     fillColor: doc.swatches.item(4)
   });
   marker.appliedObjectStyle = doc.objectStyles.item("marker basic");
@@ -107,10 +107,15 @@ var place_markers = function(doc, page, marker, coordinates, settings) {
   for (var i = 0; i < coordinates.length; i++) {
     var currentmarker = marker.duplicate();
     var xy = offset_marker(orientation, currentmarker,coordinates[i].xy.x,coordinates[i].xy.y);
-    xy[1] = settings.ph - xy[1];
+    // xy[1] = settings.ph - xy[1];
     currentmarker.move(xy);
     currentmarker.label = coordinates[i].json;
     currentmarker.itemLayer = layer;
+    if(DEBUG){
+      var debug_tf = page.textFrames.add({geometricBounds:[0,0,20,100]});
+      debug_tf.move(xy);
+      debug_tf.contents = coordinates[i].json;
+    }
   }
 };
 

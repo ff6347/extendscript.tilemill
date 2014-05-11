@@ -1,6 +1,6 @@
 (function(thisObj) {
 
-/*! extendscript.tilemill.jsx - v0.2.0 - 2014-05-08 */
+/*! extendscript.tilemill.jsx - v0.2.0 - 2014-05-11 */
 //
 // extendscript.tilemill
 // https://github.com/fabiantheblind/extendscript.tilemill
@@ -230,7 +230,7 @@ var set_transformation = function(doc, orientation) {
 var get_marker = function(doc, page) {
   get_or_create_objectstyles(doc);
   var marker = page.ovals.add({
-    geometricBounds: [0, -2, 2, 0],
+    geometricBounds: [0, -10, 10, 0],
     fillColor: doc.swatches.item(4)
   });
   marker.appliedObjectStyle = doc.objectStyles.item("marker basic");
@@ -315,10 +315,15 @@ var place_markers = function(doc, page, marker, coordinates, settings) {
   for (var i = 0; i < coordinates.length; i++) {
     var currentmarker = marker.duplicate();
     var xy = offset_marker(orientation, currentmarker,coordinates[i].xy.x,coordinates[i].xy.y);
-    xy[1] = settings.ph - xy[1];
+    // xy[1] = settings.ph - xy[1];
     currentmarker.move(xy);
     currentmarker.label = coordinates[i].json;
     currentmarker.itemLayer = layer;
+    if(DEBUG){
+      var debug_tf = page.textFrames.add({geometricBounds:[0,0,20,100]});
+      debug_tf.move(xy);
+      debug_tf.contents = coordinates[i].json;
+    }
   }
 };
 
@@ -449,38 +454,38 @@ var geojson_analyzer = function(settings, element) {
     return null;
   }
 };
-var geodata_to_indesign_coords = function(settings, geodata, doc, page) {
+// var geodata_to_indesign_coords = function(settings, geodata, doc, page) {
 
 
-  var keys = geojson_analyzer(settings, geodata[0]);
-  if (keys === null) {
-    return 'no possible fields detected';
-  }
+//   var keys = geojson_analyzer(settings, geodata[0]);
+//   if (keys === null) {
+//     return 'no possible fields detected';
+//   }
 
-  var transformer = Geo.projections.ind.transform;
-  var bounds = settings.boundingBox.bounds;
-  var ptype = settings.ptype;
-  var zoomed = settings.boundingBox.zoomed;
+//   var transformer = Geo.projections.ind.transform;
+//   var bounds = settings.boundingBox.bounds;
+//   var ptype = settings.ptype;
+//   var zoomed = settings.boundingBox.zoomed;
 
-  var coordinates = [];
-  if (DEBUG) $.writeln(geodata[0][keys.lat.constructor.name]);
-  for (var i = 0; i < geodata.length; i++) {
+//   var coordinates = [];
+//   if (DEBUG) $.writeln(geodata[0][keys.lat.constructor.name]);
+//   for (var i = 0; i < geodata.length; i++) {
 
-    var xy = null;
-    var lat = geodata[i][keys.lat];
-    var lon = geodata[i][keys.lon];
+//     var xy = null;
+//     var lat = geodata[i][keys.lat];
+//     var lon = geodata[i][keys.lon];
 
-    var locations = [];
-    locations[0] = parseFloat(lon);
-    locations[1] = parseFloat(lat);
-    xy = transformer(doc, page, locations, zoomed, bounds, ptype);
-    coordinates.push({
-      "json": geodata[i].toSource(),
-      "xy": xy
-    });
-  }
-  return coordinates;
-};
+//     var locations = [];
+//     locations[0] = parseFloat(lon);
+//     locations[1] = parseFloat(lat);
+//     xy = transformer(doc, page, locations, zoomed, bounds, ptype);
+//     coordinates.push({
+//       "json": geodata[i].toSource(),
+//       "xy": xy
+//     });
+//   }
+//   return coordinates;
+// };
 
 function ToGeographic(mercatorX_lon, mercatorY_lat) {
   if (Math.abs(mercatorX_lon) < 180 && Math.abs(mercatorY_lat) < 90)
@@ -518,20 +523,27 @@ function ToWebMercator(mercatorX_lon, mercatorY_lat) {
 
 var geo_to_page_coords = function (doc, page, marker, settings) {
   var min_lon = settings.bbox.min[0];
-
   var min_lat = settings.bbox.min[1];
   var max_lon = settings.bbox.max[0];
-
-
   var max_lat = settings.bbox.max[1];
+
+      var tlngs = [min_lon, max_lon];
+      var tlats = [min_lat, max_lat];
 
   // to web mercator takes lon first then lat
   // var min = ToWebMercator(-14.0625, 46.4379);
   // var max = ToWebMercator(7.9102, 62.4311);
+      var lats, lngs = [];
+      if(tlats[0]<tlats[1]){lats=tlats;}else{lats[0]=tlats[1];lats[1]=tlats[0];}
+      if(tlngs[0]<tlngs[1]){lngs=tlngs;}else{lngs[0]=tlngs[1];lngs[1]=tlngs[0];}
 
-  var min = ToWebMercator(min_lon, min_lat);
-  var max = ToWebMercator(max_lon, max_lat);
+      var max = ToWebMercator(lngs[1], lats[1]);
+      var min = ToWebMercator(lngs[0], lats[0]);
+      if(DEBUG) $.writeln("max:" +max);
+      if(DEBUG) $.writeln("min:" +min);
 
+  // var min = ToWebMercator(min_lon, min_lat);
+  // var max = ToWebMercator(max_lon, max_lat);
 
   var o_min_x = min[0];
   var o_min_y = min[1];
@@ -545,26 +557,94 @@ var geo_to_page_coords = function (doc, page, marker, settings) {
   var x_ratio = width / (o_max_x - o_min_x);
   var y_ratio = height / (o_max_y - o_min_y);
 
+  var zero_y = height - y_ratio * min[1] * -1;
+  var zero_x = x_ratio * min[0] * -1;
+  if(DEBUG) $.writeln("zero_y: " + zero_y);
+  if(DEBUG) $.writeln("zero_x: " + zero_x);
 
-  var lat = 50.055977;
+  // var temp_lat = 50.055977;
+  // var temp_lng = -5.655096;
+          //Coordinates you want to map
+          // 40.41677540051771, -3.7037901976145804
+  var coords = [{
+        name: "Madrid lat 40.41677540051771, lon -3.7037901976145804",
+      arr: [40.41677540051771, -3.7037901976145804]
+    },{
+        name: "Bogota lat 4.598055600146267, lon -74.07583329943009",
+      arr: [4.598055600146267, -74.07583329943009]
+    },{
+        name: "lat -20, lon -20",
+      arr: [-20, -20]
+    },{
+        name: "lat 20, lon 20",
+      arr: [20, 20]
+    },{
+        name: "lat -20, lon 0",
+      arr: [-20, 0]
+    },{
+        name: "lat 20, lon 0",
+      arr: [20, 0]
+    },{
+      name: "lat 0, lon 0",
+      arr: [0, 0]
+    }
+    // , {
+    //   name: "Greenland",
+    //   arr: [60.642647, -44.392888]
+    // }, //Grönland
+    // {
+    //   name: "South South America",
+    //   arr: [-55.259764, -67.083834]
+    // }, //South South America
+    // {
+    //   name: "South Australia",
+    //   arr: [-43.662537, 146.727964]
+    // }, //South Australia
+    // {
+    //   name: "South India",
+    //   arr: [7.823427, 76.934111]
+    // } //South India
+  ];
 
-  var lng = -5.655096;
 
+  // var coord = [temp_lat, temp_lng];
+
+  var id_coordinates = [];
+for(var c = 0; c < coords.length;c++){
+
+  var lat = coords[c].arr[0];
+  var lng = coords[c].arr[1];
   var xy = ToWebMercator(lng, lat);
-  $.writeln("xy " + xy);
-  var centerX = (xy[0] - o_min_x) * x_ratio;
-  var centerY = (xy[1] - o_min_y) * y_ratio;
-  var coordinates = [];
 
-  var coord = {
-    "json": "{'name':'name'}",
+  // var xy = ToWebMercator(lng, lat);
+
+  $.writeln("xy " + xy);
+
+    var centerX = xy[0]*x_ratio + zero_x;
+    var centerY;
+        if(lat === 0){
+           centerY = xy[1]*y_ratio + zero_y;
+        }else if(lat < 0){
+           centerY = zero_y + Math.abs(xy[1]*y_ratio);
+        }else if(lat > 0){
+           centerY = zero_y - xy[1]*y_ratio;
+        }
+
+  // var centerX = (xy[0] - o_min_x) * x_ratio;
+  // var centerY = (xy[1] - o_min_y) * y_ratio;
+  if(DEBUG) $.writeln("centerX: " + centerX);
+  if(DEBUG) $.writeln("centerY: " + centerY);
+
+  var coord_res = {
+    "json": "{'name':'"+coords[c].name+"'}",
     "xy": {
       "x": centerX,
       "y": centerY
     }
   };
-  coordinates.push(coord);
-  place_markers(doc, page, marker, coordinates, settings);
+  id_coordinates.push(coord_res);
+}
+  place_markers(doc, page, marker, id_coordinates, settings);
 
 };
 
