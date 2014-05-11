@@ -12,8 +12,9 @@ Download the [production version](https://github.com/fabiantheblind/extendscript
 
 See these settings in the top of the script:  
 
-    var DEBUG = true; // lots of utput to the JS Console of ESTK
+    var DEBUG = true; // lots of output to the JS Console of ESTK
     var settings = {
+      new_doc:true, // you can work in a existing doc. make sure you have the right bounding box
      new_layers: true, // use new layers for markers and text
       new_marker_layer_name: 'marker', // layer name
       new_text_layer_name: 'text', // layer name
@@ -47,7 +48,7 @@ See these settings in the top of the script:
 
 ![](docs/assets/images/img-select.png)  
 
-- select your image
+- select your image (optional: if you have `new_doc:true` set to true)
 
 ![](docs/assets/images/csv-select.png)  
 

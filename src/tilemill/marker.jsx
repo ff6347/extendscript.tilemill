@@ -1,6 +1,9 @@
 
 // This is src/locations/marker.jsx
 
+// this function gets the active seletion
+// if there is no selection it falls bac to the basic marker
+// returns a pageItem
 var selector = function(doc, page){
   var selection = doc.selection;
   var marker = null;
@@ -19,6 +22,8 @@ var set_transformation = function(doc, orientation) {
   // TOP_CENTER_ANCHOR
   doc.layoutWindows[0].transformReferencePoint = AnchorPoint.CENTER_ANCHOR;
 };
+
+// creare a basic marker and add an object style
 var get_marker = function(doc, page) {
   get_or_create_objectstyles(doc);
   var marker = page.ovals.add({
@@ -29,7 +34,10 @@ var get_marker = function(doc, page) {
   return marker;
 };
 
-
+// this function offsets a marker
+// around his xy coordinate
+// can be set in settings
+//
 var offset_marker = function(orientation, pItem, x, y) {
   // orientaation possibilites are:
   // DEFAULT
@@ -86,6 +94,10 @@ var offset_marker = function(orientation, pItem, x, y) {
   return [x, y];
 };
 
+
+// this actually loops a set of page coordinates
+// and creates moves duplicates of the original markers to that position
+// also creates text
 var place_markers = function(doc, page, marker, coordinates, settings) {
   var mlayer;
   var tlayer;
@@ -163,10 +175,8 @@ function naive_getDims( /*PageItem*/ obj, /*bool*/ visible) {
   return [b[3] - b[1], b[2] - b[0]];
 }
 
-/**
- * This is src/locations/styling.jsx
- */
-
+// this creates an object style if there isn't any with the name
+// marker basic
 var get_or_create_objectstyles = function(doc) {
 
   var objectstyle = doc.objectStyles.item("marker basic");
@@ -195,13 +205,5 @@ var get_or_create_objectstyles = function(doc) {
   }
   return objectstyle;
 };
-
-
-
-/**
- * End of styling.jsx
- */
-
-
 
  // End of marker.jsx

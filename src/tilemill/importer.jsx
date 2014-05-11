@@ -1,5 +1,8 @@
 // this is src/lib/importer.jsx
-
+// import the data this calls the
+// extendscript.csv lib
+// https://github.com/fabiantheblind/extendscript.csv
+//
 var importer = function (){
   var csvfile = File.openDialog("Select your csv file.","*.*",false);
   if(csvfile === null){
