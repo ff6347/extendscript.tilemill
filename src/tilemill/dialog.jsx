@@ -9,7 +9,7 @@ var dialog = app.dialogs.add({
 
 // add some columns
 var d_col_one = dialog.dialogColumns.add();
-// var msg = d_col_one.textEditboxes.add();
+var msg = d_col_one.textEditboxes.add();
 var d_col_two = dialog.dialogColumns.add();
 // add some rows
 var min_lon_row = d_col_one.dialogRows.add();
