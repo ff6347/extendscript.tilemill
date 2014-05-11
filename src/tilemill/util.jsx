@@ -13,6 +13,18 @@
 // alert('Visible Dims: ' + naive_getDims(pItem, true));
 //
 
+// usage see
+// https://github.com/fabiantheblind/extendscript/wiki/Progress-And-Delay
+function progress_bar (w, stop, labeltext) {
+    var txt = w.add('statictext',undefined,labeltext); // add some text to the window
+    var pbar = w.add ("progressbar", undefined, 1, stop);// add the bar
+    pbar.preferredSize = [300,20];// set the size
+    w.show ();// show it
+    return pbar; // return it for further use
+    }
+
+
+
 var get_dim = function( /*PageItem*/ obj, /*bool*/ visible) {
   var boundsProperty = ((visible) ? 'visible' : 'geometric') + 'Bounds';
   var b = obj[boundsProperty];

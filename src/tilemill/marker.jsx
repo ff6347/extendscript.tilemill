@@ -87,36 +87,59 @@ var offset_marker = function(orientation, pItem, x, y) {
 };
 
 var place_markers = function(doc, page, marker, coordinates, settings) {
-  var layer;
+  var mlayer;
+  var tlayer;
   var orientation = settings.default_marker_orientation;
   set_transformation(doc, null);
-  if (settings.new_layer === true) {
-    layer = doc.layers.item(settings.new_layer_name);
+  if (settings.new_layers === true) {
+
+    if(settings.use_marker === true){
+
+    mlayer = doc.layers.item(settings.new_marker_layer_name);
     try {
-      var name = layer.name;
+      var mname = mlayer.name;
     } catch (e) {
-      layer = doc.layers.add({
-        name: settings.new_layer_name
+      mlayer = doc.layers.add({
+        name: settings.new_marker_layer_name
       });
     }
-  } else {
-    layer = doc.activeLayer;
-  }
+    }
+        if(settings.use_textframe === true){
 
+   tlayer = doc.layers.item(settings.new_text_layer_name);
+    try {
+      var tname = tlayer.name;
+    } catch (e) {
+     tlayer = doc.layers.add({
+        name: settings.new_text_layer_name
+      });
+    }
+    }
+  } else {
+    mlayer = doc.activeLayer;
+    tlayer = doc.activeLayer;
+  }
+     var progress_win = new Window ("palette"); // creste new palette
+    var progress = progress_bar(progress_win, coordinates.length, 'Placing Markers'); // call the pbar function
 
   for (var i = 0; i < coordinates.length; i++) {
     var currentmarker = marker.duplicate();
     var xy = offset_marker(orientation, currentmarker,coordinates[i].xy.x,coordinates[i].xy.y);
-    // xy[1] = settings.ph - xy[1];
+    if(settings.use_marker){
     currentmarker.move(xy);
-    currentmarker.label = coordinates[i].json;
-    currentmarker.itemLayer = layer;
-    if(DEBUG){
-      var debug_tf = page.textFrames.add({geometricBounds:[0,0,20,100]});
-      debug_tf.move(xy);
-      debug_tf.contents = coordinates[i].json;
+    currentmarker.label = coordinates[i].text;
+    currentmarker.itemLayer = mlayer;
+
     }
+    if(settings.use_textframe){
+      var tf = page.textFrames.add({geometricBounds:[0,0,20,100]});
+      tf.move(xy);
+      tf.contents = coordinates[i].text;
+      tf.itemLayer = tlayer;
+    }
+  progress.value++;
   }
+  progress.parent.close();
 };
 
 // take a look at this indiscripts blog post

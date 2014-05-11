@@ -6,8 +6,8 @@ var importer = function (){
     // nothing selected or dialog aborted
     return null;
   }else{
-    var geodata = CSV.toJSON(csvfile ,  useDialog = false, separator = ",");
-    return geodata;
+    var data = CSV.toJSON(csvfile ,  useDialog = false, separator = ",");
+    return data;
   }
 
 };

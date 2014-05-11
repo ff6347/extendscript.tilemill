@@ -2,12 +2,14 @@
 
 var DEBUG = true;
 var settings = {
-
- new_layer: true,
-  new_layer_name: 'marker',
+ new_layers: true,
+  new_marker_layer_name: 'marker',
+  new_text_layer_name: 'text',
   latitude_key:"",
   longitude_key:"",
   text_key:"",
+  use_textframe:true,
+  use_marker:true,
   possible_lat_keys : ["latitude","Latitude","LATITUDE","lat", "Lat","LAT"],
   possible_lon_keys : ["longitude","Longitude","LONGITUDE","lon", "Lon","LON"],
   /**
@@ -35,8 +37,8 @@ var settings = {
   sinusoidal = 4
   aitoff = 5
    */
-  projection_type:1,
-  ptype:'mercator',
+  // projection_type:1,
+  // ptype:'mercator',
   doc:null,
   pw:0,
   ph:0,
@@ -44,26 +46,9 @@ var settings = {
   // to get lat lon coordinates
 };
 
-// this is the world bounding box
-// will also be set by the script from the info of the doc
-// settings.boundingBox = {
-//   zoomed: true,
-//   bounds: {
-//     ul_lat:0,
-//     ul_lon:0,
-//     lr_lat:0,
-//     lr_lon:0
-//   }
-// };
-
 settings.bbox = {
-  // top_lat:80,
-  // bottom_lat:-80,
-  // left_lon:-180,
-  // right_lon:180,
+
   min:[],
   max:[]
 };
-
-
-
+// end of globals.jsx

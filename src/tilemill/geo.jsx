@@ -128,7 +128,9 @@ function ToWebMercator(mercatorX_lon, mercatorY_lat) {
   return [mercatorX_lon, mercatorY_lat];
 }
 
-var geo_to_page_coords = function (doc, page, marker, settings) {
+var geo_to_page_coords = function (doc, page, marker, settings, geodata) {
+     var progress_win = new Window ("palette"); // creste new palette
+    var progress = progress_bar(progress_win, geodata.length, 'Calculating Locations'); // call the pbar function
   var min_lon = settings.bbox.min[0];
   var min_lat = settings.bbox.min[1];
   var max_lon = settings.bbox.max[0];
@@ -173,54 +175,15 @@ var geo_to_page_coords = function (doc, page, marker, settings) {
   // var temp_lng = -5.655096;
           //Coordinates you want to map
           // 40.41677540051771, -3.7037901976145804
-  var coords = [{
-        name: "Madrid lat 40.41677540051771, lon -3.7037901976145804",
-      arr: [40.41677540051771, -3.7037901976145804]
-    },{
-        name: "Bogota lat 4.598055600146267, lon -74.07583329943009",
-      arr: [4.598055600146267, -74.07583329943009]
-    },{
-        name: "lat -20, lon -20",
-      arr: [-20, -20]
-    },{
-        name: "lat 20, lon 20",
-      arr: [20, 20]
-    },{
-        name: "lat -20, lon 0",
-      arr: [-20, 0]
-    },{
-        name: "lat 20, lon 0",
-      arr: [20, 0]
-    },{
-      name: "lat 0, lon 0",
-      arr: [0, 0]
-    }
-    // , {
-    //   name: "Greenland",
-    //   arr: [60.642647, -44.392888]
-    // }, //Grönland
-    // {
-    //   name: "South South America",
-    //   arr: [-55.259764, -67.083834]
-    // }, //South South America
-    // {
-    //   name: "South Australia",
-    //   arr: [-43.662537, 146.727964]
-    // }, //South Australia
-    // {
-    //   name: "South India",
-    //   arr: [7.823427, 76.934111]
-    // } //South India
-  ];
-
+  var coords = geodata;
 
   // var coord = [temp_lat, temp_lng];
 
   var id_coordinates = [];
 for(var c = 0; c < coords.length;c++){
 
-  var lat = coords[c].arr[0];
-  var lng = coords[c].arr[1];
+  var lat = coords[c].latlng[0];
+  var lng = coords[c].latlng[1];
   var xy = ToWebMercator(lng, lat);
 
   // var xy = ToWebMercator(lng, lat);
@@ -243,14 +206,17 @@ for(var c = 0; c < coords.length;c++){
   if(DEBUG) $.writeln("centerY: " + centerY);
 
   var coord_res = {
-    "json": "{'name':'"+coords[c].name+"'}",
+    "text": coords[c].name,
     "xy": {
       "x": centerX,
       "y": centerY
     }
   };
   id_coordinates.push(coord_res);
+  progress.value++;
 }
+        progress.parent.close(); // close the palette
+
   place_markers(doc, page, marker, id_coordinates, settings);
 
 };

@@ -32,12 +32,14 @@
 
 var DEBUG = true;
 var settings = {
-
- new_layer: true,
-  new_layer_name: 'marker',
+ new_layers: true,
+  new_marker_layer_name: 'marker',
+  new_text_layer_name: 'text',
   latitude_key:"",
   longitude_key:"",
   text_key:"",
+  use_textframe:true,
+  use_marker:true,
   possible_lat_keys : ["latitude","Latitude","LATITUDE","lat", "Lat","LAT"],
   possible_lon_keys : ["longitude","Longitude","LONGITUDE","lon", "Lon","LON"],
   /**
@@ -94,10 +96,7 @@ settings.bbox = {
   min:[],
   max:[]
 };
-
-
-
-
+// end of globals.jsx
 // take a look at this indiscripts blog post about get_dim()
 // I stay with the first version. because its easy and the other versions
 // dont take in account that the marker could be outside of the page
@@ -112,6 +111,18 @@ settings.bbox = {
 // alert('Geometric Dims: ' + naive_getDims(pItem));
 // alert('Visible Dims: ' + naive_getDims(pItem, true));
 //
+
+// usage see
+// https://github.com/fabiantheblind/extendscript/wiki/Progress-And-Delay
+function progress_bar (w, stop, labeltext) {
+    var txt = w.add('statictext',undefined,labeltext); // add some text to the window
+    var pbar = w.add ("progressbar", undefined, 1, stop);// add the bar
+    pbar.preferredSize = [300,20];// set the size
+    w.show ();// show it
+    return pbar; // return it for further use
+    }
+
+
 
 var get_dim = function( /*PageItem*/ obj, /*bool*/ visible) {
   var boundsProperty = ((visible) ? 'visible' : 'geometric') + 'Bounds';
@@ -191,6 +202,186 @@ var setup_doc = function(){
 
 return {"doc":doc,"frame":frame,"page":page};
 };
+
+/*! extendscript.csv.jsx - v0.0.1 - 2014-05-01 */
+/*!
+ * This is CSV.jsx
+ * A collection of functions for reading CSV.
+ * As used in Locations.jsx
+ *
+ * License
+ * Copyright (c) 2014 Fabian "fabiantheblind" Morón Zirfas
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+ * software and associated documentation files (the "Software"), to deal in the Software
+ * without restriction, including without limitation the rights to use, copy, modify
+ * copies of the Software, and to permit persons to whom the Software is furnished to do so,
+ * subject to the following conditions:
+ * The above copyright notice and this permission notice shall be included in all copies
+ * or substantial portions of the Software.
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+ * INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+ * PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF
+ * CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE
+ * OR THE USE OR OTHER DEALNGS IN THE SOFTWARE.
+ *
+ * see also http://www.opensource.org/licenses/mit-license.php
+ */
+if(DEBUG === undefined){
+  var DEBUG = true;
+}
+CSV = function() {};
+// END OF CSV.js
+
+/**
+ * This is a string prototype function
+ * found here http://www.greywyvern.com/?post=258
+ * @param  {String} sep is the separator we use only ,
+ * @return {Array}     returns an Array of strings
+ */
+// String.prototype.splitCSV = function(sep) {
+//   for (var foo = this.split(sep = sep || ","), x = foo.length - 1, tl; x >= 0; x--) {
+//     if (foo[x].replace(/"\s+$/, '"').charAt(foo[x].length - 1) === '"') {
+//       if ((tl = foo[x].replace(/^\s+"/, '"')).length > 1 && tl.charAt(0) === '"') {
+//         foo[x] = foo[x].replace(/^\s*"|"\s*$/g, '').replace(/""/g, '"');
+//       } else if (x) {
+//         foo.splice(x - 1, 2, [foo[x - 1], foo[x]].join(sep));
+//       } else foo = foo.shift().split(sep).concat(foo);
+//     } else foo[x].replace(/""/g, '"');
+//   } return foo;
+// };
+
+
+// Dont use prototypes?
+// for the time beeing YES
+// Makes problems with other scripts
+// or we need to use a unique prefix! like ftb_splitCSV
+CSV.Utilities = {};
+
+CSV.Utilities.split_csv = function(sep, the_string) {
+
+  for (var foo = the_string.split(sep = sep || ","), x = foo.length - 1, tl; x >= 0; x--) {
+    if (foo[x].replace(/"\s+$/, '"').charAt(foo[x].length - 1) === '"') {
+      if ((tl = foo[x].replace(/^\s+"/, '"')).length > 1 && tl.charAt(0) === '"') {
+        foo[x] = foo[x].replace(/^\s*"|"\s*$/g, '').replace(/""/g, '"');
+      } else if (x) {
+        foo.splice(x - 1, 2, [foo[x - 1], foo[x]].join(sep));
+      } else foo = foo.shift().split(sep).concat(foo);
+    } else foo[x].replace(/""/g, '"');
+  }
+  return foo;
+};
+
+
+CSV.toJSON = function(csvFile, useDialog, separator) {
+  var textFile;
+  var result = [];
+  if (useDialog) {
+    textFile = File.openDialog("Select a CSV or TSV file to import.", "*.*", false);
+  } else {
+    textFile = csvFile;
+  }
+  var textLines = [];
+  if (textFile !== null) {
+    textFile.open('r', undefined, undefined);
+    while (!textFile.eof) {
+      textLines[textLines.length] = textFile.readln();
+    }
+    textFile.close();
+  }
+  if (textLines.length < 1) {
+    alert("ERROR Reading file");
+    return null;
+  } else {
+
+    $.writeln(textLines);
+    // var lines=csv.split("\n");
+    var headers = CSV.Utilities.split_csv(separator, textLines[0]);
+    if(DEBUG) $.writeln(headers);
+    for (var i = 1; i < textLines.length; i++) {
+
+      var obj = {};
+      var currentline = CSV.Utilities.split_csv( separator, textLines[i]);
+
+      for (var j = 0; j < headers.length; j++) {
+        obj[headers[j]] = currentline[j];
+      }
+      if (DEBUG) $.writeln(obj.toSource());
+      result.push(obj);
+
+    }
+
+  }
+  // alert(result[0].toSource());
+  //return result; //JavaScript object
+  return result; //JSON
+};
+
+/**
+ * this reads in a file
+ * line by line
+ * @return {Array of String}
+ */
+
+CSV.reader = {
+  read_in_txt: function() {
+
+    var textFile = File.openDialog("Select a text file to import.", "*.*", false);
+    var textLines = [];
+    if (textFile !== null) {
+      textFile.open('r', undefined, undefined);
+      while (!textFile.eof) {
+        textLines[textLines.length] = textFile.readln();
+      }
+      textFile.close();
+    }
+    if (textLines.length < 1) {
+      alert("ERROR Reading file");
+      return null;
+    } else {
+      return textLines;
+    }
+  },
+
+  /**
+   * gets lines of strings and creates the data we need from
+   * CSV Header and content
+   * @param  {Array of String} textLines are , or \t separated values
+   * @return {Object}
+   */
+  textlines_to_data: function(textLines, separator) {
+
+    var data = {};
+    data.fields = [];
+    data.keys = [];
+
+    for (var i = 0; i < textLines.length; i++) {
+
+      var line_arr = CSV.Utilities.split_csv(separator, textLines[i]);
+      if (i === 0) {
+        for (var j = 0; j < line_arr.length; j++) {
+          data.keys[j] = line_arr[j];
+        }
+
+      } else {
+        var obj_str = "";
+        for (var k = 0; k < line_arr.length; k++) {
+          if (k !== line_arr.length - 1) {
+            obj_str += 'field_' + k + ':"' + line_arr[k] + '",';
+          } else {
+            obj_str += 'field_' + k + ':"' + line_arr[k] + '"';
+          }
+        }
+        // var parsedData = JSON.parse("{"+ obj_str+"}");
+        data.fields.push(eval("({" + obj_str + "})")); // jshint ignore:line
+
+      }
+    }
+    return data;
+  }
+
+
+};
 // this is src/lib/importer.jsx
 
 var importer = function (){
@@ -199,8 +390,8 @@ var importer = function (){
     // nothing selected or dialog aborted
     return null;
   }else{
-    var geodata = CSV.toJSON(csvfile ,  useDialog = false, separator = ",");
-    return geodata;
+    var data = CSV.toJSON(csvfile ,  useDialog = false, separator = ",");
+    return data;
   }
 
 };
@@ -295,36 +486,59 @@ var offset_marker = function(orientation, pItem, x, y) {
 };
 
 var place_markers = function(doc, page, marker, coordinates, settings) {
-  var layer;
+  var mlayer;
+  var tlayer;
   var orientation = settings.default_marker_orientation;
   set_transformation(doc, null);
-  if (settings.new_layer === true) {
-    layer = doc.layers.item(settings.new_layer_name);
+  if (settings.new_layers === true) {
+
+    if(settings.use_marker === true){
+
+    mlayer = doc.layers.item(settings.new_marker_layer_name);
     try {
-      var name = layer.name;
+      var mname = mlayer.name;
     } catch (e) {
-      layer = doc.layers.add({
-        name: settings.new_layer_name
+      mlayer = doc.layers.add({
+        name: settings.new_marker_layer_name
       });
     }
-  } else {
-    layer = doc.activeLayer;
-  }
+    }
+        if(settings.use_textframe === true){
 
+   tlayer = doc.layers.item(settings.new_text_layer_name);
+    try {
+      var tname = tlayer.name;
+    } catch (e) {
+     tlayer = doc.layers.add({
+        name: settings.new_text_layer_name
+      });
+    }
+    }
+  } else {
+    mlayer = doc.activeLayer;
+    tlayer = doc.activeLayer;
+  }
+     var progress_win = new Window ("palette"); // creste new palette
+    var progress = progress_bar(progress_win, coordinates.length, 'Placing Markers'); // call the pbar function
 
   for (var i = 0; i < coordinates.length; i++) {
     var currentmarker = marker.duplicate();
     var xy = offset_marker(orientation, currentmarker,coordinates[i].xy.x,coordinates[i].xy.y);
-    // xy[1] = settings.ph - xy[1];
+    if(settings.use_marker){
     currentmarker.move(xy);
-    currentmarker.label = coordinates[i].json;
-    currentmarker.itemLayer = layer;
-    if(DEBUG){
-      var debug_tf = page.textFrames.add({geometricBounds:[0,0,20,100]});
-      debug_tf.move(xy);
-      debug_tf.contents = coordinates[i].json;
+    currentmarker.label = coordinates[i].text;
+    currentmarker.itemLayer = mlayer;
+
     }
+    if(settings.use_textframe){
+      var tf = page.textFrames.add({geometricBounds:[0,0,20,100]});
+      tf.move(xy);
+      tf.contents = coordinates[i].text;
+      tf.itemLayer = tlayer;
+    }
+  progress.value++;
   }
+  progress.parent.close();
 };
 
 // take a look at this indiscripts blog post
@@ -521,7 +735,9 @@ function ToWebMercator(mercatorX_lon, mercatorY_lat) {
   return [mercatorX_lon, mercatorY_lat];
 }
 
-var geo_to_page_coords = function (doc, page, marker, settings) {
+var geo_to_page_coords = function (doc, page, marker, settings, geodata) {
+     var progress_win = new Window ("palette"); // creste new palette
+    var progress = progress_bar(progress_win, geodata.length, 'Calculating Locations'); // call the pbar function
   var min_lon = settings.bbox.min[0];
   var min_lat = settings.bbox.min[1];
   var max_lon = settings.bbox.max[0];
@@ -566,54 +782,15 @@ var geo_to_page_coords = function (doc, page, marker, settings) {
   // var temp_lng = -5.655096;
           //Coordinates you want to map
           // 40.41677540051771, -3.7037901976145804
-  var coords = [{
-        name: "Madrid lat 40.41677540051771, lon -3.7037901976145804",
-      arr: [40.41677540051771, -3.7037901976145804]
-    },{
-        name: "Bogota lat 4.598055600146267, lon -74.07583329943009",
-      arr: [4.598055600146267, -74.07583329943009]
-    },{
-        name: "lat -20, lon -20",
-      arr: [-20, -20]
-    },{
-        name: "lat 20, lon 20",
-      arr: [20, 20]
-    },{
-        name: "lat -20, lon 0",
-      arr: [-20, 0]
-    },{
-        name: "lat 20, lon 0",
-      arr: [20, 0]
-    },{
-      name: "lat 0, lon 0",
-      arr: [0, 0]
-    }
-    // , {
-    //   name: "Greenland",
-    //   arr: [60.642647, -44.392888]
-    // }, //Grönland
-    // {
-    //   name: "South South America",
-    //   arr: [-55.259764, -67.083834]
-    // }, //South South America
-    // {
-    //   name: "South Australia",
-    //   arr: [-43.662537, 146.727964]
-    // }, //South Australia
-    // {
-    //   name: "South India",
-    //   arr: [7.823427, 76.934111]
-    // } //South India
-  ];
-
+  var coords = geodata;
 
   // var coord = [temp_lat, temp_lng];
 
   var id_coordinates = [];
 for(var c = 0; c < coords.length;c++){
 
-  var lat = coords[c].arr[0];
-  var lng = coords[c].arr[1];
+  var lat = coords[c].latlng[0];
+  var lng = coords[c].latlng[1];
   var xy = ToWebMercator(lng, lat);
 
   // var xy = ToWebMercator(lng, lat);
@@ -636,14 +813,17 @@ for(var c = 0; c < coords.length;c++){
   if(DEBUG) $.writeln("centerY: " + centerY);
 
   var coord_res = {
-    "json": "{'name':'"+coords[c].name+"'}",
+    "text": coords[c].name,
     "xy": {
       "x": centerX,
       "y": centerY
     }
   };
   id_coordinates.push(coord_res);
+  progress.value++;
 }
+        progress.parent.close(); // close the palette
+
   place_markers(doc, page, marker, id_coordinates, settings);
 
 };
@@ -651,40 +831,21 @@ for(var c = 0; c < coords.length;c++){
 ////////////////////////
 // End of geo.jsx
 ////////////////////////
-var draw = function() {
-
-  var setup_result = setup_doc();
-
-  if (setup_result === null) return; // aborted by user
-
-  var doc = setup_result.doc;
-
-  var current_unit = doc.viewPreferences.horizontalMeasurementUnits;
-
-  doc.viewPreferences.horizontalMeasurementUnits = doc.viewPreferences.verticalMeasurementUnits = MeasurementUnits.PIXELS;
-
-  ///////////////////////////////
-
-  var frame = setup_result.frame;
-  var page = setup_result.page;
-  // build the UI for interaction
-
-
-  alert("Paste the values you used in tilemill to create your bounding box.\ne.g. -120,-45,120,45 is ordered like this [min lon, min lat, max lon, max lat]");
   var dialog = app.dialogs.add({
     name: "Paste Mapbox Bounds",
     canCancel: true,
-
   });
-
   var d_col_one = dialog.dialogColumns.add();
   var d_col_two = dialog.dialogColumns.add();
   var d_col_three = dialog.dialogColumns.add();
   var d_col_four = dialog.dialogColumns.add();
+  var d_col_five = dialog.dialogColumns.add();
 
   var min_lon_row = d_col_one.dialogRows.add();
   var label_min_lon = min_lon_row.staticTexts.add({
     staticLabel: "min lon:",
+          staticAlignment:StaticAlignmentOptions.LEFT_ALIGN,
+
     minWidth: 70,
   });
   var min_lon_box = min_lon_row.realEditboxes.add({
@@ -694,10 +855,11 @@ var draw = function() {
     smallNudge:0.1,
     largeNudge:1
     });
-
   var min_lat_row = d_col_one.dialogRows.add();
   var label_min_lat = min_lat_row.staticTexts.add({
     staticLabel: "min lat:",
+          staticAlignment:StaticAlignmentOptions.LEFT_ALIGN,
+
     minWidth: 70,
   });
   var min_lat_box = min_lat_row.realEditboxes.add({
@@ -711,6 +873,8 @@ var draw = function() {
   var max_lon_row = d_col_one.dialogRows.add();
   var label_max_lon = max_lon_row.staticTexts.add({
     staticLabel: "max lon:",
+          staticAlignment:StaticAlignmentOptions.LEFT_ALIGN,
+
     minWidth: 70,
   });
   var max_lon_box = max_lon_row.realEditboxes.add({
@@ -724,6 +888,8 @@ var draw = function() {
   var max_lat_row = d_col_one.dialogRows.add();
   var label_max_lat = max_lat_row.staticTexts.add({
     staticLabel: "max lat:",
+          staticAlignment:StaticAlignmentOptions.LEFT_ALIGN,
+
     minWidth: 70,
   });
   var max_lat_box = max_lat_row.realEditboxes.add({
@@ -734,30 +900,97 @@ var draw = function() {
     largeNudge:1
     });
 
+var dd_label_row = d_col_five.dialogRows.add();
+var dd_label = dd_label_row.staticTexts.add({
+      staticLabel: "TextFrame Contents",
+      staticAlignment:StaticAlignmentOptions.LEFT_ALIGN,
+    minWidth: 70,
+  });
+var dd_row = d_col_five.dialogRows.add();
+
+var dropdown = dd_row.dropdowns.add({
+  // stringList : 
+  });
+var draw = function() {
+
+  var setup_result = setup_doc();
+
+  if (setup_result === null) return; // aborted by user
+  var doc = setup_result.doc;
+
+  var current_unit = doc.viewPreferences.horizontalMeasurementUnits;
+
+  doc.viewPreferences.horizontalMeasurementUnits = doc.viewPreferences.verticalMeasurementUnits = MeasurementUnits.PIXELS;
+
+  ///////////////////////////////
+
+  var frame = setup_result.frame;
+  var page = setup_result.page;
+  // import the data
+  var rawdata = importer();
+  var dd_stringList = ["rawdata"];
+  for(var k in rawdata[0]){
+    if(rawdata[0].hasOwnProperty(k)){
+      dd_stringList.push(k);
+    }
+  }
+
+  dropdown.stringList = dd_stringList;
+  dropdown.selectedIndex = 0;
+
+  // build the UI for interaction
+    if(DEBUG) $.writeln("rawdata.toSource(): " +rawdata.toSource());
+    var keys = geojson_analyzer(settings, rawdata[0]);
+    if (keys === null) {
+      return 'no possible fields detected';
+    }
+
+
+  alert("Paste the values you used in tilemill to create your bounding box.\ne.g. -120,-45,120,45 is ordered like this [min lon, min lat, max lon, max lat]");
+  // see dialog.jsx for all the dialog settings
   if (dialog.show() === true) {
     var min_lon = min_lon_box.editValue;
     var min_lat = min_lat_box.editValue;
     var max_lon = max_lon_box.editValue;
     var max_lat = max_lat_box.editValue;
+    var text_index = dropdown.selectedIndex;
+    var text_key = dd_stringList[dropdown.selectedIndex];
     dialog.destroy();
 
     if (set_bbox([min_lon, min_lat, max_lon, max_lat]) !== 0) {
       alert("error reading in the bbox values");
       return;
     }
-
-
+    var progress_win = new Window ("palette"); // creste new palette
+    var progress = progress_bar(progress_win, rawdata.length, 'Analysing Data. Please be patient'); // call the pbar function
+    var geodata = [];
+    for (var i = 0; i < rawdata.length; i++) {
+      var temp_lat = rawdata[i][keys.lat];
+      var temp_lon = rawdata[i][keys.lon];
+      var latlng = [temp_lat, temp_lon];
+      var temp_txt ;
+      if(text_index !== 0){
+        temp_txt = rawdata[i][text_key];
+      }else{
+        temp_txt = rawdata[i].toSource();
+      }
+      geodata.push({
+        name: temp_txt,
+        "latlng": latlng
+      });
+      progress.value++;
+    }
+    progress.parent.close();
     var marker = selector(doc, page);
-    geo_to_page_coords(doc, page, marker, settings);
+    geo_to_page_coords(doc, page, marker, settings, geodata);
 
 
   }
 
 };
 
-
 draw();
-
+ // console.close();
 
 ////////////////////////
 ///END OF MAIN.JSX
