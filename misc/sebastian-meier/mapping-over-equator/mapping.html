@@ -1,0 +1,124 @@
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+		<script src='http://code.jquery.com/jquery-2.1.0.min.js'></script>
+	</head>
+	<body>
+		<canvas id="holder" width="1000" height="749" style="width:1000px; height=749px;"></canvas>
+		<SCRIPT TYPE="text/javascript">
+
+			
+			//tilemill bounding box:
+			var tlngs = [-138.5156, -30.2344];
+			var tlats = [54.5721,77.9157];
+
+			//tilemill image size:
+			var width = 400;
+  			var height = 234;
+
+  			//tilemill image name
+  			var imageName = "beispielsprojekt.png";
+
+  			//Coordinates you want to map
+			var coords = [
+  				[0,0],
+  				[60.642647, -44.392888], //Grönland
+  				[-55.259764, -67.083834], //South South America
+  				[-43.662537, 146.727964], //South Australia
+  				[7.823427, 76.934111] //South India
+  			];
+
+			var lats, lngs = [];
+			if(tlats[0]<tlats[1]){lats=tlats;}else{lats[0]=tlats[1];lats[1]=tlats[0];}
+			if(tlngs[0]<tlngs[1]){lngs=tlngs;}else{lngs[0]=tlngs[1];lngs[1]=tlngs[0];}
+
+			var max = ToWebMercator(lngs[1], lats[1]);
+			var min = ToWebMercator(lngs[0], lats[0]);
+
+  			var o_min_x = min[0];
+  			var o_max_x = max[0];
+
+  			var o_min_y = min[1];
+  			var o_max_y = max[1];
+
+  			var x_ratio = width/(o_max_x - o_min_x);
+  			var y_ratio = height/(o_max_y - o_min_y);
+
+  			var zero_y = height - y_ratio * min[1] * -1;
+  			var zero_x = x_ratio * min[0] * -1;
+
+  			$(document).ready(function() {
+  				$('#holder').attr('width', width).attr('height', height+200).css('width', width+'px').css('height', (height+200)+'px');
+				var canvas = document.getElementById('holder');
+      			var ctx = canvas.getContext('2d');
+
+	  			var mapImg = new Image();
+				mapImg.onload = function() {
+					ctx.drawImage(mapImg, 0, 0, width, height);
+
+					for(var i = 0; i<coords.length; i++){
+						drawCoord(ctx, coords[i]);
+					}
+					
+				}
+				mapImg.src = imageName;
+			});
+
+			function drawCoord(ctx, coord){
+				//mapping lat = y, lng = x
+				var lat = coord[0];
+				var lng = coord[1];
+				var xy = ToWebMercator(lng, lat);
+
+				var centerX = xy[0]*x_ratio + zero_x;
+
+				if(lat == 0){
+					var centerY = xy[1]*y_ratio + zero_y;
+				}else if(lat < 0){
+					var centerY = zero_y + Math.abs(xy[1]*y_ratio);
+				}else if(lat > 0){
+					var centerY = zero_y - xy[1]*y_ratio;
+				}
+
+				ctx.beginPath();
+				ctx.arc(centerX, centerY, 5, 0, 2 * Math.PI, false);
+				ctx.fillStyle = 'red';
+				ctx.fill();
+			}
+
+			function ToGeographic(mercatorX_lon, mercatorY_lat){
+				if (Math.abs(mercatorX_lon) < 180 && Math.abs(mercatorY_lat) < 90)
+					return;
+
+				if ((Math.abs(mercatorX_lon) > 20037508.3427892) || (Math.abs(mercatorY_lat) > 20037508.3427892))
+					return;
+
+				var x = mercatorX_lon;
+				var y = mercatorY_lat;
+				var num3 = x / 6378137.0;
+				var num4 = num3 * 57.295779513082323;
+				var num5 = Math.floor((double)((num4 + 180.0) / 360.0));
+				var num6 = num4 - (num5 * 360.0);
+				var num7 = 1.5707963267948966 - (2.0 * Math.atan(Math.exp((-1.0 * y) / 6378137.0)));
+				mercatorX_lon = num6;
+				mercatorY_lat = num7 * 57.295779513082323;
+
+				return [mercatorX_lon, mercatorY_lat];
+			}
+
+			function ToWebMercator(mercatorX_lon, mercatorY_lat){
+				if ((Math.abs(mercatorX_lon) > 180 || Math.abs(mercatorY_lat) > 90))
+					return;
+
+				var num = mercatorX_lon * 0.017453292519943295;
+				var x = 6378137.0 * num;
+				var a = mercatorY_lat * 0.017453292519943295;
+
+				mercatorX_lon = x;
+				mercatorY_lat = 3189068.5 * Math.log((1.0 + Math.sin(a)) / (1.0 - Math.sin(a)));
+
+				return [mercatorX_lon, mercatorY_lat];
+			}
+		</SCRIPT>
+	</body>
+</html>
