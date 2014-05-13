@@ -7,25 +7,61 @@ var dialog = app.dialogs.add({
   canCancel: true,
 });
 
-// add some columns
-var d_col_one = dialog.dialogColumns.add();
-var msg = d_col_one.textEditboxes.add();
-var d_col_two = dialog.dialogColumns.add();
-// add some rows
-var min_lon_row = d_col_one.dialogRows.add();
-var min_lat_row = d_col_one.dialogRows.add();
-var max_lon_row = d_col_one.dialogRows.add();
-var max_lat_row = d_col_one.dialogRows.add();
-var dd_label_row = d_col_two.dialogRows.add();
-var dd_row = d_col_two.dialogRows.add();
 
+
+// add some columns
+var d_col_one = dialog.dialogColumns.add(); // holds the message
+var msg_row_one = d_col_one.dialogRows.add(); // pt 1
+var msg_row_two = d_col_one.dialogRows.add(); // pt 2
+var msg_row_three = d_col_one.dialogRows.add(); // pt 3
+var msg_row_four = d_col_one.dialogRows.add(); // pt 4
+
+var msgpt1 = msg_row_one.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "Paste the values you used in tilemill to create your bounding box.",
+  staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
+});
+var msgpt2 = msg_row_two.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "e.g. -120,-45,120,45 is ordered like this:",
+  staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
+});
+var msgpt3 = msg_row_three.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "[min lon, min lat, max lon, max lat]",
+  staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
+});
+
+var msgpt4 = msg_row_four.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "Then select the value for the TextFrame",
+  staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
+});
+
+// end of message
+//
+var d_col_two = dialog.dialogColumns.add(); // will hold the min max fields
+var d_col_three = dialog.dialogColumns.add(); // will hold the dropdown
+// add some rows
+var min_lon_row = d_col_two.dialogRows.add(); // min lon row
+var min_lat_row = d_col_two.dialogRows.add(); // min lat row
+var max_lon_row = d_col_two.dialogRows.add(); // max lon row
+var max_lat_row = d_col_two.dialogRows.add(); // max lat row
+var dd_label_row = d_col_two.dialogRows.add(); // dropdown label
+var dd_row = d_col_two.dialogRows.add(); // dropdown
 
 var label_min_lon = min_lon_row.staticTexts.add({
   staticLabel: "min lon:",
   staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
-
   minWidth: 70,
 });
+/**
+ * the cool thing about realEditboxes is that they will
+ * take care of the parsing of values.
+ *
+ * If the user enters astring that can not be parsed the ui will warn
+ * also you can use the up down arrows to change the values
+ */
 var min_lon_box = min_lon_row.realEditboxes.add({
   editValue: -120,
   minimumValue: -180,
@@ -33,12 +69,13 @@ var min_lon_box = min_lon_row.realEditboxes.add({
   smallNudge: 0.1,
   largeNudge: 1
 });
+// label
 var label_min_lat = min_lat_row.staticTexts.add({
   staticLabel: "min lat:",
   staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
-
   minWidth: 70,
 });
+// box
 var min_lat_box = min_lat_row.realEditboxes.add({
   editValue: -45,
   minimumValue: -90,
@@ -46,13 +83,13 @@ var min_lat_box = min_lat_row.realEditboxes.add({
   smallNudge: 0.1,
   largeNudge: 1
 });
-
+// label
 var label_max_lon = max_lon_row.staticTexts.add({
   staticLabel: "max lon:",
   staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
-
   minWidth: 70,
 });
+// box
 var max_lon_box = max_lon_row.realEditboxes.add({
   editValue: 120,
   minimumValue: -180,
@@ -60,13 +97,13 @@ var max_lon_box = max_lon_row.realEditboxes.add({
   smallNudge: 0.1,
   largeNudge: 1
 });
-
+// label
 var label_max_lat = max_lat_row.staticTexts.add({
   staticLabel: "max lat:",
   staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
-
   minWidth: 70,
 });
+// box
 var max_lat_box = max_lat_row.realEditboxes.add({
   editValue: 45,
   minimumValue: -90,
@@ -74,12 +111,21 @@ var max_lat_box = max_lat_row.realEditboxes.add({
   smallNudge: 0.1,
   largeNudge: 1
 });
-
+// label for the dropdown
 var dd_label = dd_label_row.staticTexts.add({
   staticLabel: "TextFrame Contents",
   staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
   minWidth: 70,
 });
+// dropdown
+// we will set the values for the dropdown later on
+// so we don't do nothing here right now
+//
+// it would be better to do it right away but this
+// would mean to have the handling of the gejson analyse here
+// or the ui creatin within the draw function
+// both is not suitable for reading the script
 var dropdown = dd_row.dropdowns.add({
   // stringList : 
 });
+

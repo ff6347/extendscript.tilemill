@@ -1,5 +1,5 @@
 
-/*! extendscript.tilemill.jsx - v0.3.0 - 2014-05-11 */
+/*! extendscript.tilemill.jsx - v0.3.0 - 2014-05-13 */
 //
 // extendscript.tilemill
 // https://github.com/fabiantheblind/extendscript.tilemill
@@ -146,24 +146,36 @@ var set_bbox = function(arr) {
  * * @return {"doc": doc,"frame": frame,"page": page};
  */
 var setup_doc = function() {
-  var doc, page, frame;
+  var doc, page, frame; // hold the results
+  // the user wants a new document
   if (settings.new_doc === true) {
-
-  var image = File.openDialog("Select your image", "*.png", false);
-  if (image === null) {
-    return null;
-  }
+    // select the image
+    var image = File.openDialog("Select your image", "*.png", false);
+    if (image === null) {
+      // aborted by user :-(
+      return null;
+    }
+    // this doc will be destroyed
+    // it is only here for analysing the image
     var temp_doc = app.documents.add();
+    // make sure we use PIXELS
     temp_doc.viewPreferences.horizontalMeasurementUnits = temp_doc.viewPreferences.verticalMeasurementUnits = MeasurementUnits.PIXELS;
+    // create a frame that will hold the image
     var temp_rect = temp_doc.pages[0].rectangles.add({
       geometricBounds: [0, 0, 100, 100]
     });
-    temp_rect.place(image);
-    temp_rect.fit(FitOptions.FRAME_TO_CONTENT);
-    var dim = get_dim(temp_rect, true);
+
+    temp_rect.place(image); // place the image
+    temp_rect.fit(FitOptions.FRAME_TO_CONTENT); // fit the frame
+    var dim = get_dim(temp_rect, true); // get the sizes
     if (DEBUG) $.writeln("new doc will be w/h " + dim);
-    settings.pw = dim[0];
-    settings.ph = dim[1];
+    settings.pw = dim[0]; // set the globals
+    settings.ph = dim[1]; // set the globals
+    // now this will be the doc we work in
+    // make sure you use PIXELS by setting the height as string
+    // with the px measurement
+    // no facing pages
+    // and also set it to use pixels
     doc = app.documents.add({
       documentPreferences: {
         pageWidth: dim[0] + "px",
@@ -175,22 +187,31 @@ var setup_doc = function() {
         verticalMeasurementUnits: MeasurementUnits.PIXELS
       }
     });
-    temp_doc.close(SaveOptions.NO);
-    page = doc.pages[0];
+    temp_doc.close(SaveOptions.NO);// destroy the temp doc
+
+    page = doc.pages[0];// get the first page
+    // add a frame in the right size
     frame = page.rectangles.add({
       geometricBounds: [0, 0, dim[1], dim[0]]
     });
-    frame.place(image);
+
+    frame.place(image);// place the image
+    // we are done for now
   } else {
+    // the user wants to work in his own doc
     if (app.documents.length > 0) {
-      doc = app.activeDocument;
+
+      doc = app.activeDocument; // there is a doc
       // make sure we have pixels
       doc.viewPreferences.horizontalMeasurementUnits = doc.viewPreferences.verticalMeasurementUnits = MeasurementUnits.PIXELS;
 
+      settings.pw = doc.documentPreferences.pageWidth; // get width to globals
+      settings.ph = doc.documentPreferences.pageHeight; // get height
+      page = doc.layoutWindows[0].activePage;// get the page
 
-      settings.pw = doc.documentPreferences.pageWidth;
-      settings.ph = doc.documentPreferences.pageHeight;
-      page = doc.layoutWindows[0].activePage;
+      // for now we asume the user knows what he is doing
+      // all the mapping will take place depending on the size of the
+      // page
       // if (doc.selection.length > 0) {
       //   if (doc.selection[0] instanceof Rectangle) {
       //     if (doc.selection[0].images.length > 0) {
@@ -207,12 +228,13 @@ var setup_doc = function() {
       //   alert("Please select a Rectangle with an TileMill image");
       //   return null;
       // }
-    }else{
+    } else {
       alert("You need a document with an TileMill image in it. Also you need to select the image.");
       return null;
     }
   }
-
+ // give back the result
+ // frame is not used at the moment
   return {
     "doc": doc,
     "frame": frame,
@@ -244,9 +266,7 @@ var setup_doc = function() {
  *
  * see also http://www.opensource.org/licenses/mit-license.php
  */
-if(DEBUG === undefined){
-  var DEBUG = true;
-}
+
 CSV = function() {};
 // END OF CSV.js
 
@@ -415,7 +435,6 @@ var importer = function (){
   }
 
 };
-
 // end of importer.jsx
 
 // This is src/locations/marker.jsx
@@ -860,25 +879,61 @@ var dialog = app.dialogs.add({
   canCancel: true,
 });
 
-// add some columns
-var d_col_one = dialog.dialogColumns.add();
-// var msg = d_col_one.textEditboxes.add();
-var d_col_two = dialog.dialogColumns.add();
-// add some rows
-var min_lon_row = d_col_one.dialogRows.add();
-var min_lat_row = d_col_one.dialogRows.add();
-var max_lon_row = d_col_one.dialogRows.add();
-var max_lat_row = d_col_one.dialogRows.add();
-var dd_label_row = d_col_two.dialogRows.add();
-var dd_row = d_col_two.dialogRows.add();
 
+
+// add some columns
+var d_col_one = dialog.dialogColumns.add(); // holds the message
+var msg_row_one = d_col_one.dialogRows.add(); // pt 1
+var msg_row_two = d_col_one.dialogRows.add(); // pt 2
+var msg_row_three = d_col_one.dialogRows.add(); // pt 3
+var msg_row_four = d_col_one.dialogRows.add(); // pt 4
+
+var msgpt1 = msg_row_one.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "Paste the values you used in tilemill to create your bounding box.",
+  staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
+});
+var msgpt2 = msg_row_two.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "e.g. -120,-45,120,45 is ordered like this:",
+  staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
+});
+var msgpt3 = msg_row_three.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "[min lon, min lat, max lon, max lat]",
+  staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
+});
+
+var msgpt4 = msg_row_four.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "Then select the value for the TextFrame",
+  staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
+});
+
+// end of message
+//
+var d_col_two = dialog.dialogColumns.add(); // will hold the min max fields
+var d_col_three = dialog.dialogColumns.add(); // will hold the dropdown
+// add some rows
+var min_lon_row = d_col_two.dialogRows.add(); // min lon row
+var min_lat_row = d_col_two.dialogRows.add(); // min lat row
+var max_lon_row = d_col_two.dialogRows.add(); // max lon row
+var max_lat_row = d_col_two.dialogRows.add(); // max lat row
+var dd_label_row = d_col_two.dialogRows.add(); // dropdown label
+var dd_row = d_col_two.dialogRows.add(); // dropdown
 
 var label_min_lon = min_lon_row.staticTexts.add({
   staticLabel: "min lon:",
   staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
-
   minWidth: 70,
 });
+/**
+ * the cool thing about realEditboxes is that they will
+ * take care of the parsing of values.
+ *
+ * If the user enters astring that can not be parsed the ui will warn
+ * also you can use the up down arrows to change the values
+ */
 var min_lon_box = min_lon_row.realEditboxes.add({
   editValue: -120,
   minimumValue: -180,
@@ -886,12 +941,13 @@ var min_lon_box = min_lon_row.realEditboxes.add({
   smallNudge: 0.1,
   largeNudge: 1
 });
+// label
 var label_min_lat = min_lat_row.staticTexts.add({
   staticLabel: "min lat:",
   staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
-
   minWidth: 70,
 });
+// box
 var min_lat_box = min_lat_row.realEditboxes.add({
   editValue: -45,
   minimumValue: -90,
@@ -899,13 +955,13 @@ var min_lat_box = min_lat_row.realEditboxes.add({
   smallNudge: 0.1,
   largeNudge: 1
 });
-
+// label
 var label_max_lon = max_lon_row.staticTexts.add({
   staticLabel: "max lon:",
   staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
-
   minWidth: 70,
 });
+// box
 var max_lon_box = max_lon_row.realEditboxes.add({
   editValue: 120,
   minimumValue: -180,
@@ -913,13 +969,13 @@ var max_lon_box = max_lon_row.realEditboxes.add({
   smallNudge: 0.1,
   largeNudge: 1
 });
-
+// label
 var label_max_lat = max_lat_row.staticTexts.add({
   staticLabel: "max lat:",
   staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
-
   minWidth: 70,
 });
+// box
 var max_lat_box = max_lat_row.realEditboxes.add({
   editValue: 45,
   minimumValue: -90,
@@ -927,15 +983,25 @@ var max_lat_box = max_lat_row.realEditboxes.add({
   smallNudge: 0.1,
   largeNudge: 1
 });
-
+// label for the dropdown
 var dd_label = dd_label_row.staticTexts.add({
   staticLabel: "TextFrame Contents",
   staticAlignment: StaticAlignmentOptions.LEFT_ALIGN,
   minWidth: 70,
 });
+// dropdown
+// we will set the values for the dropdown later on
+// so we don't do nothing here right now
+//
+// it would be better to do it right away but this
+// would mean to have the handling of the gejson analyse here
+// or the ui creatin within the draw function
+// both is not suitable for reading the script
 var dropdown = dd_row.dropdowns.add({
   // stringList : 
 });
+
+
 // this is the main action. All sub funcitons get called from here
 //
 //
@@ -966,8 +1032,9 @@ var draw = function() {
   // this runs a file import and then a transformation from the CSV data to json
   var rawdata = importer();// import the data
 
+// the real dropdown creation takes place bfore the draw function
+//
   var dd_stringList = ["rawdata"];// this is the dialog dropdow list content
-
   // the dialog itself was created before
   //
   // we loop thru the data and get all the keys for the ddlist
@@ -990,7 +1057,7 @@ var draw = function() {
 
   // this is just an alert to make sure they understand the UI
   //
-  alert("Paste the values you used in tilemill to create your bounding box.\ne.g. -120,-45,120,45 is ordered like this [min lon, min lat, max lon, max lat]");
+  // alert("Paste the values you used in tilemill to create your bounding box.\ne.g. -120,-45,120,45 is ordered like this [min lon, min lat, max lon, max lat]");
   // see dialog.jsx for all the dialog settings
   if (dialog.show() === true) {
     // get the fields

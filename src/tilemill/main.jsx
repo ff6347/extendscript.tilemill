@@ -28,8 +28,9 @@ var draw = function() {
   // this runs a file import and then a transformation from the CSV data to json
   var rawdata = importer();// import the data
 
+// the real dropdown creation takes place bfore the draw function
+//
   var dd_stringList = ["rawdata"];// this is the dialog dropdow list content
-
   // the dialog itself was created before
   //
   // we loop thru the data and get all the keys for the ddlist
@@ -52,7 +53,7 @@ var draw = function() {
 
   // this is just an alert to make sure they understand the UI
   //
-  alert("Paste the values you used in tilemill to create your bounding box.\ne.g. -120,-45,120,45 is ordered like this [min lon, min lat, max lon, max lat]");
+  // alert("Paste the values you used in tilemill to create your bounding box.\ne.g. -120,-45,120,45 is ordered like this [min lon, min lat, max lon, max lat]");
   // see dialog.jsx for all the dialog settings
   if (dialog.show() === true) {
     // get the fields
