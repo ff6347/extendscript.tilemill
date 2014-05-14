@@ -93,7 +93,7 @@ var setup_doc = function() {
       //   return null;
       // }
     } else {
-      alert("You need a document with an TileMill image in it. Also you need to select the image.");
+      alert("You need a document with the right geo coordinates");
       return null;
     }
   }

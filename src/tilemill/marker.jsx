@@ -18,8 +18,6 @@ var selector = function(doc, page){
 
 
 var set_transformation = function(doc, orientation) {
-  // CENTER_ANCHOR
-  // TOP_CENTER_ANCHOR
   doc.layoutWindows[0].transformReferencePoint = AnchorPoint.CENTER_ANCHOR;
 };
 

@@ -116,7 +116,7 @@ function ToWebMercator(mercatorX_lon, mercatorY_lat) {
 /**
  * so this is the magic
  * using @sebastian-meier functions I can calc mercator to ID coords
- * thanks a lot.
+ * thanks a lot. Needs more comments
  *
  *
  * @param  {[type]} doc      [description]
