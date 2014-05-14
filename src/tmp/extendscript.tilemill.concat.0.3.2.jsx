@@ -1,6 +1,5 @@
-(function(thisObj) {
 
-/*! extendscript.tilemill.jsx - v0.2.0 - 2014-05-11 */
+/*! extendscript.tilemill.jsx - v0.3.2 - 2014-05-14 */
 //
 // extendscript.tilemill
 // https://github.com/fabiantheblind/extendscript.tilemill
@@ -32,7 +31,8 @@
 
 var DEBUG = true;
 var settings = {
- new_layers: true,
+  new_doc:true,
+  new_layers: true,
   new_marker_layer_name: 'marker',
   new_text_layer_name: 'text',
   latitude_key:"",
@@ -58,45 +58,30 @@ var settings = {
   default_marker_orientation: "CENTER",
   /*
   The script will set these infos below by itself. Don't change them.
-  It reads data written by IDMap into the document.label
-  mercator = 1
- // this script is only for tilemill. use mercator
-  equirectangular = 0
-  gallpeters = 2
-  hammer = 3
-  sinusoidal = 4
-  aitoff = 5
    */
-  projection_type:1,
-  ptype:'mercator',
+
   doc:null,
   pw:0,
   ph:0,
-  // check out http://dbsgeo.com/latlon/
-  // to get lat lon coordinates
 };
 
-// this is the world bounding box
-// will also be set by the script from the info of the doc
-// settings.boundingBox = {
-//   zoomed: true,
-//   bounds: {
-//     ul_lat:0,
-//     ul_lon:0,
-//     lr_lat:0,
-//     lr_lon:0
-//   }
-// };
-
 settings.bbox = {
-  // top_lat:80,
-  // bottom_lat:-80,
-  // left_lon:-180,
-  // right_lon:180,
+
   min:[],
   max:[]
 };
 // end of globals.jsx
+
+// usage see
+// https://github.com/fabiantheblind/extendscript/wiki/Progress-And-Delay
+function progress_bar (w, stop, labeltext) {
+    var txt = w.add('statictext',undefined,labeltext); // add some text to the window
+    var pbar = w.add ("progressbar", undefined, 1, stop);// add the bar
+    pbar.preferredSize = [300,20];// set the size
+    w.show ();// show it
+    return pbar; // return it for further use
+    }
+
 // take a look at this indiscripts blog post about get_dim()
 // I stay with the first version. because its easy and the other versions
 // dont take in account that the marker could be outside of the page
@@ -110,19 +95,6 @@ settings.bbox = {
 // var pItem = app.selection[0]; // get the selected object
 // alert('Geometric Dims: ' + naive_getDims(pItem));
 // alert('Visible Dims: ' + naive_getDims(pItem, true));
-//
-
-// usage see
-// https://github.com/fabiantheblind/extendscript/wiki/Progress-And-Delay
-function progress_bar (w, stop, labeltext) {
-    var txt = w.add('statictext',undefined,labeltext); // add some text to the window
-    var pbar = w.add ("progressbar", undefined, 1, stop);// add the bar
-    pbar.preferredSize = [300,20];// set the size
-    w.show ();// show it
-    return pbar; // return it for further use
-    }
-
-
 
 var get_dim = function( /*PageItem*/ obj, /*bool*/ visible) {
   var boundsProperty = ((visible) ? 'visible' : 'geometric') + 'Bounds';
@@ -131,26 +103,17 @@ var get_dim = function( /*PageItem*/ obj, /*bool*/ visible) {
   return [b[3] - b[1], b[2] - b[0]];
 };
 
-
-
-
+/**
+ * takes the values the user entered and sets them into the settings as string
+ * @param {[Array]} arr Array of 4 values min_lon, min_lat, max_lon, max_lat
+ *
+ */
 var set_bbox = function(arr) {
-
-  // var arr = str.split(",");
-  // settings.bbox.left_lon = parseFloat(arr[0]);
-  // settings.bbox.bottom_lat = parseFloat(arr[1]);
-  // settings.bbox.right_lon = parseFloat(arr[2]);
-  // settings.bbox.top_lat = parseFloat(arr[3]);
-
   settings.bbox.min[0] = parseFloat(arr[0]);
   settings.bbox.min[1] = parseFloat(arr[1]);
   settings.bbox.max[0] = parseFloat(arr[2]);
   settings.bbox.max[1] = parseFloat(arr[3]);
 
-  // settings.boundingBox.bounds.ul_lat = settings.bbox.top_lat;
-  // settings.boundingBox.bounds.ul_lon = settings.bbox.left_lon;
-  // settings.boundingBox.bounds.lr_lat = settings.bbox.bottom_lat;
-  // settings.boundingBox.bounds.lr_lon = settings.bbox.right_lon;
   if (DEBUG) {
     for (var key in settings.bbox) {
       if (settings.bbox.hasOwnProperty(key)) {
@@ -161,46 +124,111 @@ var set_bbox = function(arr) {
   return 0;
 };
 /**
+
+ *
+ */
+/**
  * Load an image an get the size to create another doc that
  * has exactly the size of the image
  *
- *
+ * or get the current document
+ * * @return {"doc": doc,"frame": frame,"page": page};
  */
-var setup_doc = function(){
-  var image = File.openDialog("Select your image", "*.png", false);
-  if (image === null) {
-    return null;
-  }
+var setup_doc = function() {
+  var doc, page, frame; // hold the results
+  // the user wants a new document
+  if (settings.new_doc === true) {
+    // select the image
+    var image = File.openDialog("Select your image", "*.png", false);
+    if (image === null) {
+      // aborted by user :-(
+      return null;
+    }
+    // this doc will be destroyed
+    // it is only here for analysing the image
     var temp_doc = app.documents.add();
-      temp_doc.viewPreferences.horizontalMeasurementUnits = temp_doc.viewPreferences.verticalMeasurementUnits = MeasurementUnits.PIXELS;
+    // make sure we use PIXELS
+    temp_doc.viewPreferences.horizontalMeasurementUnits = temp_doc.viewPreferences.verticalMeasurementUnits = MeasurementUnits.PIXELS;
+    // create a frame that will hold the image
     var temp_rect = temp_doc.pages[0].rectangles.add({
       geometricBounds: [0, 0, 100, 100]
     });
-    temp_rect.place(image);
-    temp_rect.fit(FitOptions.FRAME_TO_CONTENT);
-    var dim = get_dim(temp_rect, true);
-    if(DEBUG) $.writeln( "new doc will be w/h " + dim);
-    settings.pw = dim[0];
-    settings.ph = dim[1];
-    var doc = app.documents.add({
+
+    temp_rect.place(image); // place the image
+    temp_rect.fit(FitOptions.FRAME_TO_CONTENT); // fit the frame
+    var dim = get_dim(temp_rect, true); // get the sizes
+    if (DEBUG) $.writeln("new doc will be w/h " + dim);
+    settings.pw = dim[0]; // set the globals
+    settings.ph = dim[1]; // set the globals
+    // now this will be the doc we work in
+    // make sure you use PIXELS by setting the height as string
+    // with the px measurement
+    // no facing pages
+    // and also set it to use pixels
+    doc = app.documents.add({
       documentPreferences: {
         pageWidth: dim[0] + "px",
         pageHeight: dim[1] + "px",
         facingPages: false
       },
-      viewPreferences:{
-        horizontalMeasurementUnits:MeasurementUnits.PIXELS,
-        verticalMeasurementUnits:MeasurementUnits.PIXELS
+      viewPreferences: {
+        horizontalMeasurementUnits: MeasurementUnits.PIXELS,
+        verticalMeasurementUnits: MeasurementUnits.PIXELS
       }
     });
-    temp_doc.close(SaveOptions.NO);
-    var page = doc.pages[0];
-    var frame = page.rectangles.add({
+    temp_doc.close(SaveOptions.NO);// destroy the temp doc
+
+    page = doc.pages[0];// get the first page
+    // add a frame in the right size
+    frame = page.rectangles.add({
       geometricBounds: [0, 0, dim[1], dim[0]]
     });
-    frame.place(image);
 
-return {"doc":doc,"frame":frame,"page":page};
+    frame.place(image);// place the image
+    // we are done for now
+  } else {
+    // the user wants to work in his own doc
+    if (app.documents.length > 0) {
+
+      doc = app.activeDocument; // there is a doc
+      // make sure we have pixels
+      doc.viewPreferences.horizontalMeasurementUnits = doc.viewPreferences.verticalMeasurementUnits = MeasurementUnits.PIXELS;
+
+      settings.pw = doc.documentPreferences.pageWidth; // get width to globals
+      settings.ph = doc.documentPreferences.pageHeight; // get height
+      page = doc.layoutWindows[0].activePage;// get the page
+
+      // for now we asume the user knows what he is doing
+      // all the mapping will take place depending on the size of the
+      // page
+      // if (doc.selection.length > 0) {
+      //   if (doc.selection[0] instanceof Rectangle) {
+      //     if (doc.selection[0].images.length > 0) {
+      //       frame = doc.selection[0];
+      //     }else{
+      //       alert("There is no image in here");
+      //       return null;
+      //     }
+      //   }else{
+      //     alert("This is no Rectangle");
+      //     return null;
+      //   }
+      // }else{
+      //   alert("Please select a Rectangle with an TileMill image");
+      //   return null;
+      // }
+    } else {
+      alert("You need a document with the right geo coordinates");
+      return null;
+    }
+  }
+ // give back the result
+ // frame is not used at the moment
+  return {
+    "doc": doc,
+    "frame": frame,
+    "page": page
+  };
 };
 
 /*! extendscript.csv.jsx - v0.0.1 - 2014-05-01 */
@@ -227,9 +255,7 @@ return {"doc":doc,"frame":frame,"page":page};
  *
  * see also http://www.opensource.org/licenses/mit-license.php
  */
-if(DEBUG === undefined){
-  var DEBUG = true;
-}
+
 CSV = function() {};
 // END OF CSV.js
 
@@ -383,7 +409,10 @@ CSV.reader = {
 
 };
 // this is src/lib/importer.jsx
-
+// import the data this calls the
+// extendscript.csv lib
+// https://github.com/fabiantheblind/extendscript.csv
+//
 var importer = function (){
   var csvfile = File.openDialog("Select your csv file.","*.*",false);
   if(csvfile === null){
@@ -395,11 +424,13 @@ var importer = function (){
   }
 
 };
-
 // end of importer.jsx
 
 // This is src/locations/marker.jsx
 
+// this function gets the active seletion
+// if there is no selection it falls bac to the basic marker
+// returns a pageItem
 var selector = function(doc, page){
   var selection = doc.selection;
   var marker = null;
@@ -414,10 +445,10 @@ var selector = function(doc, page){
 
 
 var set_transformation = function(doc, orientation) {
-  // CENTER_ANCHOR
-  // TOP_CENTER_ANCHOR
   doc.layoutWindows[0].transformReferencePoint = AnchorPoint.CENTER_ANCHOR;
 };
+
+// creare a basic marker and add an object style
 var get_marker = function(doc, page) {
   get_or_create_objectstyles(doc);
   var marker = page.ovals.add({
@@ -428,7 +459,10 @@ var get_marker = function(doc, page) {
   return marker;
 };
 
-
+// this function offsets a marker
+// around his xy coordinate
+// can be set in settings
+//
 var offset_marker = function(orientation, pItem, x, y) {
   // orientaation possibilites are:
   // DEFAULT
@@ -485,6 +519,10 @@ var offset_marker = function(orientation, pItem, x, y) {
   return [x, y];
 };
 
+
+// this actually loops a set of page coordinates
+// and creates moves duplicates of the original markers to that position
+// also creates text
 var place_markers = function(doc, page, marker, coordinates, settings) {
   var mlayer;
   var tlayer;
@@ -562,10 +600,8 @@ function naive_getDims( /*PageItem*/ obj, /*bool*/ visible) {
   return [b[3] - b[1], b[2] - b[0]];
 }
 
-/**
- * This is src/locations/styling.jsx
- */
-
+// this creates an object style if there isn't any with the name
+// marker basic
 var get_or_create_objectstyles = function(doc) {
 
   var objectstyle = doc.objectStyles.item("marker basic");
@@ -595,20 +631,14 @@ var get_or_create_objectstyles = function(doc) {
   return objectstyle;
 };
 
-
-
-/**
- * End of styling.jsx
- */
-
-
-
  // End of marker.jsx
 
 ////////////////////////
 //This is src/tilemill/geo.jsx
 ////////////////////////
 
+// analys the csv data for lat lon values
+//
 var geojson_analyzer = function(settings, element) {
   var found_lat = false;
   var found_lon = false;
@@ -668,38 +698,13 @@ var geojson_analyzer = function(settings, element) {
     return null;
   }
 };
-// var geodata_to_indesign_coords = function(settings, geodata, doc, page) {
 
-
-//   var keys = geojson_analyzer(settings, geodata[0]);
-//   if (keys === null) {
-//     return 'no possible fields detected';
-//   }
-
-//   var transformer = Geo.projections.ind.transform;
-//   var bounds = settings.boundingBox.bounds;
-//   var ptype = settings.ptype;
-//   var zoomed = settings.boundingBox.zoomed;
-
-//   var coordinates = [];
-//   if (DEBUG) $.writeln(geodata[0][keys.lat.constructor.name]);
-//   for (var i = 0; i < geodata.length; i++) {
-
-//     var xy = null;
-//     var lat = geodata[i][keys.lat];
-//     var lon = geodata[i][keys.lon];
-
-//     var locations = [];
-//     locations[0] = parseFloat(lon);
-//     locations[1] = parseFloat(lat);
-//     xy = transformer(doc, page, locations, zoomed, bounds, ptype);
-//     coordinates.push({
-//       "json": geodata[i].toSource(),
-//       "xy": xy
-//     });
-//   }
-//   return coordinates;
-// };
+/**
+ * written by @sebastian-meier
+ * adapted by @fabiantheblind
+ * @param {[type]} mercatorX_lon [description]
+ * @param {[type]} mercatorY_lat [description]
+ */
 
 function ToGeographic(mercatorX_lon, mercatorY_lat) {
   if (Math.abs(mercatorX_lon) < 180 && Math.abs(mercatorY_lat) < 90)
@@ -721,6 +726,13 @@ function ToGeographic(mercatorX_lon, mercatorY_lat) {
   return [mercatorX_lon, mercatorY_lat];
 }
 
+/**
+ * written by @sebastian-meier
+ * adapted by @fabiantheblind
+ * @param {[type]} mercatorX_lon [description]
+ * @param {[type]} mercatorY_lat [description]
+ */
+
 function ToWebMercator(mercatorX_lon, mercatorY_lat) {
   if ((Math.abs(mercatorX_lon) > 180 || Math.abs(mercatorY_lat) > 90))
     return;
@@ -735,28 +747,52 @@ function ToWebMercator(mercatorX_lon, mercatorY_lat) {
   return [mercatorX_lon, mercatorY_lat];
 }
 
-var geo_to_page_coords = function (doc, page, marker, settings, geodata) {
-     var progress_win = new Window ("palette"); // creste new palette
-    var progress = progress_bar(progress_win, geodata.length, 'Calculating Locations'); // call the pbar function
+
+/**
+ * so this is the magic
+ * using @sebastian-meier functions I can calc mercator to ID coords
+ * thanks a lot. Needs more comments
+ *
+ *
+ * @param  {[type]} doc      [description]
+ * @param  {[type]} page     [description]
+ * @param  {[type]} marker   [description]
+ * @param  {[type]} settings [description]
+ * @param  {[type]} geodata  [description]
+ * @return {[type]}          [description]
+ */
+var geo_to_page_coords = function(doc, page, marker, settings, geodata) {
+  var progress_win = new Window("palette"); // creste new palette
+  var progress = progress_bar(progress_win, geodata.length, 'Calculating Locations'); // call the pbar function
   var min_lon = settings.bbox.min[0];
   var min_lat = settings.bbox.min[1];
   var max_lon = settings.bbox.max[0];
   var max_lat = settings.bbox.max[1];
 
-      var tlngs = [min_lon, max_lon];
-      var tlats = [min_lat, max_lat];
+  var tlngs = [min_lon, max_lon];
+  var tlats = [min_lat, max_lat];
 
   // to web mercator takes lon first then lat
   // var min = ToWebMercator(-14.0625, 46.4379);
   // var max = ToWebMercator(7.9102, 62.4311);
-      var lats, lngs = [];
-      if(tlats[0]<tlats[1]){lats=tlats;}else{lats[0]=tlats[1];lats[1]=tlats[0];}
-      if(tlngs[0]<tlngs[1]){lngs=tlngs;}else{lngs[0]=tlngs[1];lngs[1]=tlngs[0];}
+  var lats, lngs = [];
+  if (tlats[0] < tlats[1]) {
+    lats = tlats;
+  } else {
+    lats[0] = tlats[1];
+    lats[1] = tlats[0];
+  }
+  if (tlngs[0] < tlngs[1]) {
+    lngs = tlngs;
+  } else {
+    lngs[0] = tlngs[1];
+    lngs[1] = tlngs[0];
+  }
 
-      var max = ToWebMercator(lngs[1], lats[1]);
-      var min = ToWebMercator(lngs[0], lats[0]);
-      if(DEBUG) $.writeln("max:" +max);
-      if(DEBUG) $.writeln("min:" +min);
+  var max = ToWebMercator(lngs[1], lats[1]);
+  var min = ToWebMercator(lngs[0], lats[0]);
+  if (DEBUG) $.writeln("max:" + max);
+  if (DEBUG) $.writeln("min:" + min);
 
   // var min = ToWebMercator(min_lon, min_lat);
   // var max = ToWebMercator(max_lon, max_lat);
@@ -775,54 +811,59 @@ var geo_to_page_coords = function (doc, page, marker, settings, geodata) {
 
   var zero_y = height - y_ratio * min[1] * -1;
   var zero_x = x_ratio * min[0] * -1;
-  if(DEBUG) $.writeln("zero_y: " + zero_y);
-  if(DEBUG) $.writeln("zero_x: " + zero_x);
+  if (DEBUG) $.writeln("zero_y: " + zero_y);
+  if (DEBUG) $.writeln("zero_x: " + zero_x);
 
-  // var temp_lat = 50.055977;
-  // var temp_lng = -5.655096;
-          //Coordinates you want to map
-          // 40.41677540051771, -3.7037901976145804
   var coords = geodata;
 
-  // var coord = [temp_lat, temp_lng];
-
   var id_coordinates = [];
-for(var c = 0; c < coords.length;c++){
+  for (var c = 0; c < coords.length; c++) {
 
-  var lat = coords[c].latlng[0];
-  var lng = coords[c].latlng[1];
-  var xy = ToWebMercator(lng, lat);
+    var lat = coords[c].latlng[0];
+    var lng = coords[c].latlng[1];
+    if (lat > 90.1 || lat < -90.1) {
+      if (DEBUG) {
+        $.writeln("your latitude value is out of the mapping range. I will skip this value");
+        $.writeln("lat " + lat);
+        continue;
+      }
 
-  // var xy = ToWebMercator(lng, lat);
-
-  $.writeln("xy " + xy);
-
-    var centerX = xy[0]*x_ratio + zero_x;
-    var centerY;
-        if(lat === 0){
-           centerY = xy[1]*y_ratio + zero_y;
-        }else if(lat < 0){
-           centerY = zero_y + Math.abs(xy[1]*y_ratio);
-        }else if(lat > 0){
-           centerY = zero_y - xy[1]*y_ratio;
-        }
-
-  // var centerX = (xy[0] - o_min_x) * x_ratio;
-  // var centerY = (xy[1] - o_min_y) * y_ratio;
-  if(DEBUG) $.writeln("centerX: " + centerX);
-  if(DEBUG) $.writeln("centerY: " + centerY);
-
-  var coord_res = {
-    "text": coords[c].name,
-    "xy": {
-      "x": centerX,
-      "y": centerY
     }
-  };
-  id_coordinates.push(coord_res);
-  progress.value++;
-}
-        progress.parent.close(); // close the palette
+    if (lng > 180.1 || lng < -180.1) {
+      if (DEBUG) {
+        $.writeln("your longitude value is out of the mapping range. I will skip this value");
+        $.writeln("lng " + lng);
+        continue;
+      }
+    }
+    var xy = ToWebMercator(lng, lat);
+    if (DEBUG) $.writeln("coords[" + String(c) + "].name: " + coords[c].name);
+    if (DEBUG) $.writeln("xy " + xy);
+
+    var centerX = xy[0] * x_ratio + zero_x;
+    var centerY;
+    if (lat === 0) {
+      centerY = xy[1] * y_ratio + zero_y;
+    } else if (lat < 0) {
+      centerY = zero_y + Math.abs(xy[1] * y_ratio);
+    } else if (lat > 0) {
+      centerY = zero_y - xy[1] * y_ratio;
+    }
+
+    if (DEBUG) $.writeln("centerX: " + centerX);
+    if (DEBUG) $.writeln("centerY: " + centerY);
+
+    var coord_res = {
+      "text": coords[c].name,
+      "xy": {
+        "x": centerX,
+        "y": centerY
+      }
+    };
+    id_coordinates.push(coord_res);
+    progress.value++;
+  }
+  progress.parent.close(); // close the palette
 
   place_markers(doc, page, marker, id_coordinates, settings);
 
@@ -831,168 +872,258 @@ for(var c = 0; c < coords.length;c++){
 ////////////////////////
 // End of geo.jsx
 ////////////////////////
-  var dialog = app.dialogs.add({
-    name: "Paste Mapbox Bounds",
-    canCancel: true,
-  });
-  var d_col_one = dialog.dialogColumns.add();
-  var d_col_two = dialog.dialogColumns.add();
-  var d_col_three = dialog.dialogColumns.add();
-  var d_col_four = dialog.dialogColumns.add();
-  var d_col_five = dialog.dialogColumns.add();
+// this normally should be in the draw function
+// but it was cluttering up the whole thing.
+// So I made the UI creatin global
+//
+var dialog = app.dialogs.add({
+  name: "Paste Mapbox Bounds",
+  canCancel: true,
+});
 
-  var min_lon_row = d_col_one.dialogRows.add();
-  var label_min_lon = min_lon_row.staticTexts.add({
-    staticLabel: "min lon:",
-          staticAlignment:StaticAlignmentOptions.LEFT_ALIGN,
+// add some columns
+var d_col_one = dialog.dialogColumns.add(); // holds the message
+var msg_row_one = d_col_one.dialogRows.add(); // pt 1
+var msg_row_two = d_col_one.dialogRows.add(); // pt 2
+var msg_row_three = d_col_one.dialogRows.add(); // pt 3
+var msg_row_four = d_col_one.dialogRows.add(); // pt 4
 
-    minWidth: 70,
-  });
-  var min_lon_box = min_lon_row.realEditboxes.add({
-    editValue:-120,
-    minimumValue: -180,
-    maximumValue: 180,
-    smallNudge:0.1,
-    largeNudge:1
-    });
-  var min_lat_row = d_col_one.dialogRows.add();
-  var label_min_lat = min_lat_row.staticTexts.add({
-    staticLabel: "min lat:",
-          staticAlignment:StaticAlignmentOptions.LEFT_ALIGN,
+var msgpt1 = msg_row_one.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "Paste the values you used in tilemill to create your bounding box.",
+});
 
-    minWidth: 70,
-  });
-  var min_lat_box = min_lat_row.realEditboxes.add({
-    editValue:-45,
-    minimumValue: -90,
-    maximumValue: 90,
-    smallNudge:0.1,
-    largeNudge:1
-    });
 
-  var max_lon_row = d_col_one.dialogRows.add();
-  var label_max_lon = max_lon_row.staticTexts.add({
-    staticLabel: "max lon:",
-          staticAlignment:StaticAlignmentOptions.LEFT_ALIGN,
+var msgpt2 = msg_row_two.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "e.g. -120,-45,120,45 is ordered like this:",
+});
+var msgpt3 = msg_row_three.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "[min lon, min lat, max lon, max lat]",
+});
 
-    minWidth: 70,
-  });
-  var max_lon_box = max_lon_row.realEditboxes.add({
-    editValue:120,
-    minimumValue: -180,
-    maximumValue: 180,
-    smallNudge:0.1,
-    largeNudge:1
-    });
+var msgpt4 = msg_row_four.staticTexts.add({
+  minWidth: 200,
+  staticLabel: "Then select the value for the TextFrame",
+});
 
-  var max_lat_row = d_col_one.dialogRows.add();
-  var label_max_lat = max_lat_row.staticTexts.add({
-    staticLabel: "max lat:",
-          staticAlignment:StaticAlignmentOptions.LEFT_ALIGN,
+// end of message
+//
+var d_col_two = dialog.dialogColumns.add(); // will hold the min max fields
+var d_col_three = dialog.dialogColumns.add(); // will hold the dropdown
+// add some rows
+var min_lon_row = d_col_two.dialogRows.add(); // min lon row
+var min_lat_row = d_col_two.dialogRows.add(); // min lat row
+var max_lon_row = d_col_two.dialogRows.add(); // max lon row
+var max_lat_row = d_col_two.dialogRows.add(); // max lat row
+var dd_label_row = d_col_two.dialogRows.add(); // dropdown label
+var dd_row = d_col_two.dialogRows.add(); // dropdown
 
-    minWidth: 70,
-  });
-  var max_lat_box = max_lat_row.realEditboxes.add({
-    editValue:45,
-    minimumValue: -90,
-    maximumValue: 90,
-    smallNudge:0.1,
-    largeNudge:1
-    });
-
-var dd_label_row = d_col_five.dialogRows.add();
+var label_min_lon = min_lon_row.staticTexts.add({
+  staticLabel: "min lon:",
+  minWidth: 70,
+});
+/**
+ * the cool thing about realEditboxes is that they will
+ * take care of the parsing of values.
+ *
+ * If the user enters astring that can not be parsed the ui will warn
+ * also you can use the up down arrows to change the values
+ */
+var min_lon_box = min_lon_row.realEditboxes.add({
+  editValue: -120,
+  minimumValue: -180,
+  maximumValue: 180,
+  smallNudge: 0.1,
+  largeNudge: 1
+});
+// label
+var label_min_lat = min_lat_row.staticTexts.add({
+  staticLabel: "min lat:",
+  minWidth: 70,
+});
+// box
+var min_lat_box = min_lat_row.realEditboxes.add({
+  editValue: -45,
+  minimumValue: -90,
+  maximumValue: 90,
+  smallNudge: 0.1,
+  largeNudge: 1
+});
+// label
+var label_max_lon = max_lon_row.staticTexts.add({
+  staticLabel: "max lon:",
+  minWidth: 70,
+});
+// box
+var max_lon_box = max_lon_row.realEditboxes.add({
+  editValue: 120,
+  minimumValue: -180,
+  maximumValue: 180,
+  smallNudge: 0.1,
+  largeNudge: 1
+});
+// label
+var label_max_lat = max_lat_row.staticTexts.add({
+  staticLabel: "max lat:",
+  minWidth: 70,
+});
+// box
+var max_lat_box = max_lat_row.realEditboxes.add({
+  editValue: 45,
+  minimumValue: -90,
+  maximumValue: 90,
+  smallNudge: 0.1,
+  largeNudge: 1
+});
+// label for the dropdown
 var dd_label = dd_label_row.staticTexts.add({
-      staticLabel: "TextFrame Contents",
-      staticAlignment:StaticAlignmentOptions.LEFT_ALIGN,
-    minWidth: 70,
-  });
-var dd_row = d_col_five.dialogRows.add();
-
+  staticLabel: "TextFrame Contents",
+  minWidth: 70,
+});
+// dropdown
+// we will set the values for the dropdown later on
+// so we don't do nothing here right now
+//
+// it would be better to do it right away but this
+// would mean to have the handling of the gejson analyse here
+// or the ui creatin within the draw function
+// both is not suitable for reading the script
 var dropdown = dd_row.dropdowns.add({
   // stringList : 
-  });
+});
+
+// checking if we are in CS6 or higher
+// if we are we can use some more styling for the UI
+//
+if(parseFloat(app.version) >= 8){
+msgpt1.staticAlignment = StaticAlignmentOptions.LEFT_ALIGN;
+msgpt2.staticAlignment = StaticAlignmentOptions.LEFT_ALIGN;
+msgpt3.staticAlignment = StaticAlignmentOptions.LEFT_ALIGN;
+msgpt4.staticAlignment = StaticAlignmentOptions.LEFT_ALIGN;
+label_min_lon.staticAlignment = StaticAlignmentOptions.LEFT_ALIGN;
+label_min_lat.staticAlignment = StaticAlignmentOptions.LEFT_ALIGN;
+label_max_lon.staticAlignment = StaticAlignmentOptions.LEFT_ALIGN;
+label_max_lat.staticAlignment = StaticAlignmentOptions.LEFT_ALIGN;
+dd_label.staticAlignment = StaticAlignmentOptions.LEFT_ALIGN;
+}
+
+// this is the main action. All sub funcitons get called from here
+//
+//
+// check out http://dbsgeo.com/latlon/
+// to get lat lon coordinates
+//
 var draw = function() {
 
+  if(parseFloat(app.version) < 7){
+    if(DEBUG) $.writeln(app.version);
+    alert("You are working in InDesign " + app.version +"\nUnfortunately this script only works in higher versions if ID. Due to the fact that InDesign CS4 can't work with pixels. Sorry for that.");
+    return;
+  }
+  // setup_doc.
+  // This function creates a temporary document and loads the the image
+  // The size of the image gets analyzed and another document is created
+  // in the right size to hold the image
+  // returns a doc frame and a page (frame is not used right now)
   var setup_result = setup_doc();
 
-  if (setup_result === null) return; // aborted by user
-  var doc = setup_result.doc;
+  if (setup_result === null) return; // aborted by user image loading
 
+  var doc = setup_result.doc; // the new doc
+
+  // make sure we work with pixels
   var current_unit = doc.viewPreferences.horizontalMeasurementUnits;
-
   doc.viewPreferences.horizontalMeasurementUnits = doc.viewPreferences.verticalMeasurementUnits = MeasurementUnits.PIXELS;
 
   ///////////////////////////////
 
-  var frame = setup_result.frame;
-  var page = setup_result.page;
-  // import the data
-  var rawdata = importer();
-  var dd_stringList = ["rawdata"];
-  for(var k in rawdata[0]){
-    if(rawdata[0].hasOwnProperty(k)){
+  // var frame = setup_result.frame;
+  var page = setup_result.page; // our page
+  // this runs a file import and then a transformation from the CSV data to json
+  var rawdata = importer();// import the data
+
+// the real dropdown creation takes place bfore the draw function
+//
+  var dd_stringList = ["rawdata"];// this is the dialog dropdow list content
+  // the dialog itself was created before
+  //
+  // we loop thru the data and get all the keys for the ddlist
+  for (var k in rawdata[0]) {
+    if (rawdata[0].hasOwnProperty(k)) {
       dd_stringList.push(k);
     }
   }
 
-  dropdown.stringList = dd_stringList;
-  dropdown.selectedIndex = 0;
+  dropdown.stringList = dd_stringList;// now set it in the dialog
+  dropdown.selectedIndex = 0;// to make sure something is selected
 
-  // build the UI for interaction
-    if(DEBUG) $.writeln("rawdata.toSource(): " +rawdata.toSource());
-    var keys = geojson_analyzer(settings, rawdata[0]);
-    if (keys === null) {
-      return 'no possible fields detected';
-    }
+  // now we analyse the first element to get the lat lon keys
+  //
+  var keys = geojson_analyzer(settings, rawdata[0]);
+  if (keys === null) {
+    // if we are here there are no lat lon keys found
+    return 'no possible fields detected';
+  }
 
-
-  alert("Paste the values you used in tilemill to create your bounding box.\ne.g. -120,-45,120,45 is ordered like this [min lon, min lat, max lon, max lat]");
+  // this is just an alert to make sure they understand the UI
+  //
+  // alert("Paste the values you used in tilemill to create your bounding box.\ne.g. -120,-45,120,45 is ordered like this [min lon, min lat, max lon, max lat]");
   // see dialog.jsx for all the dialog settings
   if (dialog.show() === true) {
+    // get the fields
     var min_lon = min_lon_box.editValue;
     var min_lat = min_lat_box.editValue;
     var max_lon = max_lon_box.editValue;
     var max_lat = max_lat_box.editValue;
+    // get the index value
     var text_index = dropdown.selectedIndex;
+    // get the key
     var text_key = dd_stringList[dropdown.selectedIndex];
-    dialog.destroy();
+    dialog.destroy(); // dont need the dialog anymore
 
     if (set_bbox([min_lon, min_lat, max_lon, max_lat]) !== 0) {
+    // if this does not work the values where totally wrong.
       alert("error reading in the bbox values");
       return;
     }
-    var progress_win = new Window ("palette"); // creste new palette
+    // To show some progress
+    var progress_win = new Window("palette"); // creste new palette
     var progress = progress_bar(progress_win, rawdata.length, 'Analysing Data. Please be patient'); // call the pbar function
-    var geodata = [];
+
+    var geodata = [];// will hold the geo values
+    // loop the data and get the fields we need
     for (var i = 0; i < rawdata.length; i++) {
       var temp_lat = rawdata[i][keys.lat];
       var temp_lon = rawdata[i][keys.lon];
       var latlng = [temp_lat, temp_lon];
-      var temp_txt ;
-      if(text_index !== 0){
-        temp_txt = rawdata[i][text_key];
-      }else{
-        temp_txt = rawdata[i].toSource();
+      // Woohoo we have coordiantes
+      var temp_txt;// will hold the text
+
+      if (text_index !== 0) {
+        temp_txt = rawdata[i][text_key];// get the selected field
+      } else {
+        temp_txt = rawdata[i].toSource();// this is like a data dumb
       }
+
       geodata.push({
         name: temp_txt,
         "latlng": latlng
       });
-      progress.value++;
-    }
-    progress.parent.close();
-    var marker = selector(doc, page);
-    geo_to_page_coords(doc, page, marker, settings, geodata);
-
-
+      progress.value++;// update the bar
+    }// end the loop
+    progress.parent.close();// ed the bar
+    var marker = selector(doc, page); // get the selection or create a marker
+    geo_to_page_coords(doc, page, marker, settings, geodata);// now the magic
+  }else{
+    // dialog was aborted
   }
 
 };
 
-draw();
- // console.close();
+draw();// run it
 
 ////////////////////////
 ///END OF MAIN.JSX
 ////////////////////////
-})(this);
