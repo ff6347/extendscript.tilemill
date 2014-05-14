@@ -1,5 +1,5 @@
 
-/*! extendscript.tilemill.jsx - v0.3.0 - 2014-05-13 */
+/*! extendscript.tilemill.jsx - v0.3.0 - 2014-05-14 */
 //
 // extendscript.tilemill
 // https://github.com/fabiantheblind/extendscript.tilemill
@@ -71,6 +71,17 @@ settings.bbox = {
   max:[]
 };
 // end of globals.jsx
+
+// usage see
+// https://github.com/fabiantheblind/extendscript/wiki/Progress-And-Delay
+function progress_bar (w, stop, labeltext) {
+    var txt = w.add('statictext',undefined,labeltext); // add some text to the window
+    var pbar = w.add ("progressbar", undefined, 1, stop);// add the bar
+    pbar.preferredSize = [300,20];// set the size
+    w.show ();// show it
+    return pbar; // return it for further use
+    }
+
 // take a look at this indiscripts blog post about get_dim()
 // I stay with the first version. because its easy and the other versions
 // dont take in account that the marker could be outside of the page
@@ -84,19 +95,6 @@ settings.bbox = {
 // var pItem = app.selection[0]; // get the selected object
 // alert('Geometric Dims: ' + naive_getDims(pItem));
 // alert('Visible Dims: ' + naive_getDims(pItem, true));
-//
-
-// usage see
-// https://github.com/fabiantheblind/extendscript/wiki/Progress-And-Delay
-function progress_bar (w, stop, labeltext) {
-    var txt = w.add('statictext',undefined,labeltext); // add some text to the window
-    var pbar = w.add ("progressbar", undefined, 1, stop);// add the bar
-    pbar.preferredSize = [300,20];// set the size
-    w.show ();// show it
-    return pbar; // return it for further use
-    }
-
-
 
 var get_dim = function( /*PageItem*/ obj, /*bool*/ visible) {
   var boundsProperty = ((visible) ? 'visible' : 'geometric') + 'Bounds';
@@ -105,26 +103,17 @@ var get_dim = function( /*PageItem*/ obj, /*bool*/ visible) {
   return [b[3] - b[1], b[2] - b[0]];
 };
 
-
-
-
+/**
+ * takes the values the user entered and sets them into the settings as string
+ * @param {[Array]} arr Array of 4 values min_lon, min_lat, max_lon, max_lat
+ *
+ */
 var set_bbox = function(arr) {
-
-  // var arr = str.split(",");
-  // settings.bbox.left_lon = parseFloat(arr[0]);
-  // settings.bbox.bottom_lat = parseFloat(arr[1]);
-  // settings.bbox.right_lon = parseFloat(arr[2]);
-  // settings.bbox.top_lat = parseFloat(arr[3]);
-
   settings.bbox.min[0] = parseFloat(arr[0]);
   settings.bbox.min[1] = parseFloat(arr[1]);
   settings.bbox.max[0] = parseFloat(arr[2]);
   settings.bbox.max[1] = parseFloat(arr[3]);
 
-  // settings.boundingBox.bounds.ul_lat = settings.bbox.top_lat;
-  // settings.boundingBox.bounds.ul_lon = settings.bbox.left_lon;
-  // settings.boundingBox.bounds.lr_lat = settings.bbox.bottom_lat;
-  // settings.boundingBox.bounds.lr_lon = settings.bbox.right_lon;
   if (DEBUG) {
     for (var key in settings.bbox) {
       if (settings.bbox.hasOwnProperty(key)) {
@@ -229,7 +218,7 @@ var setup_doc = function() {
       //   return null;
       // }
     } else {
-      alert("You need a document with an TileMill image in it. Also you need to select the image.");
+      alert("You need a document with the right geo coordinates");
       return null;
     }
   }
@@ -456,8 +445,6 @@ var selector = function(doc, page){
 
 
 var set_transformation = function(doc, orientation) {
-  // CENTER_ANCHOR
-  // TOP_CENTER_ANCHOR
   doc.layoutWindows[0].transformReferencePoint = AnchorPoint.CENTER_ANCHOR;
 };
 
@@ -764,7 +751,7 @@ function ToWebMercator(mercatorX_lon, mercatorY_lat) {
 /**
  * so this is the magic
  * using @sebastian-meier functions I can calc mercator to ID coords
- * thanks a lot.
+ * thanks a lot. Needs more comments
  *
  *
  * @param  {[type]} doc      [description]
