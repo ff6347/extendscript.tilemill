@@ -6,6 +6,11 @@
 //
 var draw = function() {
 
+  if(parseFloat(app.version) < 7){
+    if(DEBUG) $.writeln(app.version);
+    alert("You are working in InDesign " + app.version +"\nUnfortunately this script only works in higher versions if ID. Due to the fact that InDesign CS4 can't work with pixels. Sorry for that.");
+    return;
+  }
   // setup_doc.
   // This function creates a temporary document and loads the the image
   // The size of the image gets analyzed and another document is created

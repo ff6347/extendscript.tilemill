@@ -1,5 +1,6 @@
+(function(thisObj) {
 
-/*! extendscript.tilemill.jsx - v0.3.0 - 2014-05-14 */
+/*! extendscript.tilemill.jsx - v0.3.1 - 2014-05-14 */
 //
 // extendscript.tilemill
 // https://github.com/fabiantheblind/extendscript.tilemill
@@ -1122,3 +1123,4 @@ draw();// run it
 ////////////////////////
 ///END OF MAIN.JSX
 ////////////////////////
+})(this);

@@ -1,8 +1,13 @@
 # extendscript.tilemill
+
+InDesign CS5+
 export png images from tilemill and import them to InDesign.  
 
 still w.i.p.  
 
+## prerequisites  
+
+Learn a bit of tile mill. A got starter is this tutorial.  
 
 ## Getting Started
 Download the [production version](https://github.com/fabiantheblind/extendscript.tilemill) from the folder dist.
