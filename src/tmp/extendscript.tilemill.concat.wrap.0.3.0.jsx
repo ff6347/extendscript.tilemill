@@ -822,9 +822,24 @@ var geo_to_page_coords = function(doc, page, marker, settings, geodata) {
 
     var lat = coords[c].latlng[0];
     var lng = coords[c].latlng[1];
-    var xy = ToWebMercator(lng, lat);
+    if (lat > 90.1 || lat < -90.1) {
+      if (DEBUG) {
+        $.writeln("your latitude value is out of the mapping range. I will skip this value");
+        $.writeln("lat " + lat);
+        continue;
+      }
 
-    $.writeln("xy " + xy);
+    }
+    if (lng > 180.1 || lng < -180.1) {
+      if (DEBUG) {
+        $.writeln("your longitude value is out of the mapping range. I will skip this value");
+        $.writeln("lng " + lng);
+        continue;
+      }
+    }
+    var xy = ToWebMercator(lng, lat);
+    if (DEBUG) $.writeln("coords[" + String(c) + "].name: " + coords[c].name);
+    if (DEBUG) $.writeln("xy " + xy);
 
     var centerX = xy[0] * x_ratio + zero_x;
     var centerY;
